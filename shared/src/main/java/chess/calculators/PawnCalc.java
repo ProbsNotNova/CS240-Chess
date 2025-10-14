@@ -17,20 +17,27 @@ public class PawnCalc {
         Collection<ChessMove> validMoves = new ArrayList();
         ChessPiece startPiece = board.getPiece(myPosition);
         ChessGame.TeamColor ally = startPiece.getTeamColor();
-        //boolean firstMove = true;
+
+        //row direction set
+        int rowDir = 0;
+        if (ally == ChessGame.TeamColor.WHITE) {
+            rowDir = 1;
+        } else if (ally == ChessGame.TeamColor.BLACK) {
+            rowDir = -1;
+        } //something broken with colors if rowDir stays 0
 
         // First move double move if valid
 
 
         //single moves after first/double
-        ChessPosition move = new ChessPosition(row-1, col);
+        ChessPosition move = new ChessPosition(row-rowDir, col);
         if(board.getPiece(move) == null) {
             validMoves.add(new ChessMove(myPosition, move, null));
-            if(row == 6 && board.getPiece(myPosition).getTeamColor() == ally) {
-
-            } else if (row == 1 && board.getPiece(myPosition).getTeamColor() != ally){
-
-            }
+//            if(row == 6 && board.getPiece(myPosition).getTeamColor() == ally) {
+//                if (row -
+//            } else if (row == 1 && board.getPiece(myPosition).getTeamColor() != ally){
+//                if (row + 2)
+//            }
         }
 
         // spot enemy (front diagonals)
