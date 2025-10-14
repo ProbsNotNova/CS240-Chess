@@ -7,9 +7,8 @@ import java.util.Collection;
 
 public class PawnCalc {
 
+    // Validate moves based on if it is non promotion or promotion qualified.
     static void addToValidMoves (int rowDir, int row, Collection<ChessMove> vMoves,ChessPosition myPos, ChessPosition move) {
-
-
         // if pawn makes it to last row it can move to, promote piece move. Otherwise, regular move
         if ((rowDir < 0 && row == 2) || (rowDir > 0 && row == 7)) {
             vMoves.add(new ChessMove(myPos, move, ChessPiece.PieceType.QUEEN));
@@ -42,14 +41,11 @@ public class PawnCalc {
         // may have backwards implementations
         if (board.getPiece(move) == null) {
             addToValidMoves(rowDir, row, validMoves, myPosition, move);
-//            validMoves.add(new ChessMove(myPosition, move, null));
-
             // If pawn hasn't moved from starting row for color, validate double move space
             ChessPosition doubleMove = new ChessPosition(row + (rowDir * 2), col);
             if ((row == 7 && rowDir < 0) || (row == 2 && rowDir > 0)) { //code sees bottom left as {1,1}
                 if (board.getPiece(doubleMove) == null) {
                     addToValidMoves(rowDir, row, validMoves, myPosition, doubleMove);
-//                    validMoves.add(new ChessMove(myPosition, doubleMove, null));
                 }
             }
         }
@@ -58,10 +54,8 @@ public class PawnCalc {
         ChessPosition captureRight = new ChessPosition(row + (rowDir), col + 1);
         if (0 < col-1 && (board.getPiece(captureLeft) != null) && (board.getPiece(captureLeft).getTeamColor() != ally)) {
             addToValidMoves(rowDir, row, validMoves, myPosition, captureLeft);
-//            validMoves.add(new ChessMove(myPosition, captureLeft, null));
         } else if (col+1 < 8 && (board.getPiece(captureRight) != null) && (board.getPiece(captureRight).getTeamColor() != ally)) {
             addToValidMoves(rowDir, row, validMoves, myPosition, captureRight);
-//            validMoves.add(new ChessMove(myPosition, captureRight, null));
         }
 
 

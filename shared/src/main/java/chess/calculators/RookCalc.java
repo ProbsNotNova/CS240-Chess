@@ -17,7 +17,7 @@ public class RookCalc implements moveCalc{
         boolean moveDown = true;
         boolean moveLeft = true;
         boolean moveRight = true;
-        for (int n=1; n<8; n++) {
+        for (int n=1; n<9; n++) {
             //row - n
             if (moveUp && (0 < row-n)) {
                 ChessPosition topLeftPos = new ChessPosition(row-n, col);
@@ -29,7 +29,7 @@ public class RookCalc implements moveCalc{
                 moveDown = checkPos(myPosition, validMoves, board, ally, botRightPos);
             }
             // col - n
-            if (moveLeft && (0 < col+n)) {
+            if (moveLeft && (0 < col-n)) {
                 ChessPosition topRightPos = new ChessPosition(row, col-n);
                 moveLeft = checkPos(myPosition, validMoves, board, ally, topRightPos);
             }
