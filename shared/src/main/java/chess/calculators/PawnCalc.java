@@ -19,18 +19,35 @@ public class PawnCalc {
         ChessGame.TeamColor ally = startPiece.getTeamColor();
         //boolean firstMove = true;
 
+        // First move double move if valid
 
-        ChessPosition startMove1 = new ChessPosition(row-1, col);
-        if(board.getPiece(startMove1) == null) {
-            validMoves.add(new ChessMove(myPosition, startMove1, null));
 
-            ChessPosition startMove2 = new ChessPosition(row - 2, col);
-            if (/*firstMove &&*/ board.getPiece(startMove2) == null) {
-                validMoves.add(new ChessMove(myPosition, startMove2, null));
-                moveCheck(board, validMoves, myPosition, startMove1, ally);
+        //single moves after first/double
+        ChessPosition move = new ChessPosition(row-1, col);
+        if(board.getPiece(move) == null) {
+            validMoves.add(new ChessMove(myPosition, move, null));
+            if(row == 6 && board.getPiece(myPosition).getTeamColor() == ally) {
+
+            } else if (row == 1 && board.getPiece(myPosition).getTeamColor() != ally){
+
             }
-            moveCheck(board, validMoves, myPosition, startMove1, ally);
         }
+
+        // spot enemy (front diagonals)
+
+
+
+//            ChessPosition startMove1 = new ChessPosition(row-1, col);
+//        if(board.getPiece(startMove1) == null) {
+//            validMoves.add(new ChessMove(myPosition, startMove1, null));
+//
+//            ChessPosition startMove2 = new ChessPosition(row - 2, col);
+//            if (/*firstMove &&*/ board.getPiece(startMove2) == null) {
+//                validMoves.add(new ChessMove(myPosition, startMove2, null));
+//                moveCheck(board, startMove1, ally);
+//            }
+//            moveCheck(board, startMove1, ally);
+//        }
 
 //        default public boolean checkPos(ChessPosition myPosition, Collection<ChessMove> validMoves, ChessBoard board,
 //                                    ChessGame.TeamColor ally, ChessPosition posCheck) {
