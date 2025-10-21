@@ -10,15 +10,28 @@ import java.util.Collection;
  */
 public class ChessGame {
 
-    public ChessGame() {
+    private final ChessBoard board;
+    private boolean whiteTurn;
 
+    public ChessGame() {
+        this.board = new ChessBoard();
+        this.whiteTurn = true;
     }
+
+    // public boolean isWhiteTurn() {
+    //     return whiteTurn;
+    // }
 
     /**
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        throw new RuntimeException("Not implemented");
+        //return whiteTurn ? TeamColor.WHITE : TeamColor.BLACK;
+        TeamColor turn = TeamColor.BLACK;
+        if (whiteTurn) {
+            turn = TeamColor.WHITE;
+        }
+        return turn;
     }
 
     /**
@@ -27,7 +40,15 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        throw new RuntimeException("Not implemented");
+        //whiteTurn = team ? TeamColor.WHITE : TeamColor.BLACK;
+
+        // if whiteTurn true and team is black, set whiteTurn false.
+        // Otherwise if whiteTurn false and team is white, set whiteTurn true
+        if (whiteTurn && team == TeamColor.BLACK) {
+            whiteTurn = false;
+        } else if (!whiteTurn && team == TeamColor.WHITE) {
+            whiteTurn = true;
+        }
     }
 
     /**
@@ -46,7 +67,7 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+
     }
 
     /**
@@ -56,7 +77,10 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        // need to fill move logic code in
+
+        // turn toggle after successful move
+        whiteTurn = !whiteTurn;
     }
 
     /**
@@ -105,6 +129,6 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
-        throw new RuntimeException("Not implemented");
+        return board;
     }
 }
