@@ -2,6 +2,8 @@ package chess;
 
 import java.util.Collection;
 
+//import static chess.ChessPiece.PieceType.KING;
+
 /**
  * For a class that can manage a chess game, making moves on a board
  * <p>
@@ -67,6 +69,23 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
+        //valid if our piece prevents King from being in check.
+        // Piece                        moves for piece
+        board.getPiece(startPosition).pieceMoves(board, startPosition);
+        // validmoves = []
+        // for (move in all moves) {
+        //       piece
+        //       if (!isInCheck()) {
+        //          add to validmoves array
+        //       }
+        //       make move back
+        //       }
+    }
+
+    /**
+     *     HELPER FOR VALIDMOVES MOVES A SINGLE PIECE SOMEWHERE
+     */
+    public void movePiece (ChessPiece piece, ChessPosition endPosition) {
 
     }
 
@@ -90,7 +109,15 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        // sweep pieces for color opposite of teamColor to see if in check
+        //call piecemoves???? to verify moving piece for is in check
+        boolean check;
+//        if (opposite color in check) {
+//            check = true;
+//        } else {
+//            check = false;
+//        }
+//        return check;
     }
 
     /**
@@ -100,8 +127,15 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
-    }
+        // no piece moves and king in check then checkmate
+        boolean checkmate;
+//        if (teamColor in checkmate) {
+//            checkmate = true;
+//        } else {
+//            checkmate = false;
+//        }
+//        return checkmate;
+        }
 
     /**
      * Determines if the given team is in stalemate, which here is defined as having
@@ -111,8 +145,15 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
-    }
+        // if no pieces can move and king not in check
+        boolean stalemate;
+//        if (teamColor in stalemate) {
+//            stalemate = true;
+//        } else {
+//            stalemate = false;
+//        }
+//        return stalemate;
+        }
 
     /**
      * Sets this game's chessboard with a given board
@@ -120,7 +161,7 @@ public class ChessGame {
      * @param board the new board to use
      */
     public void setBoard(ChessBoard board) {
-        throw new RuntimeException("Not implemented");
+        board.resetBoard();
     }
 
     /**
