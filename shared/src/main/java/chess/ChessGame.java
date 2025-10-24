@@ -19,6 +19,7 @@ public class ChessGame {
 
     public ChessGame() {
         this.board = new ChessBoard();
+        board.resetBoard();
         this.whiteTurn = true;
     }
 
@@ -113,7 +114,7 @@ public class ChessGame {
 
         // above is likely wrong but follows an essential line of thinking
         ChessPiece piece = board.getPiece(move.getStartPosition());
-        if (!validMoves(move.getStartPosition()).isEmpty() && piece.getTeamColor() == getTeamTurn()) {
+        if (piece != null && !validMoves(move.getStartPosition()).isEmpty() && piece.getTeamColor() == getTeamTurn()) {
             movePiece(piece, move.getStartPosition(), move.getEndPosition());
         } else {
             throw new InvalidMoveException();
@@ -209,15 +210,22 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        // if no pieces can move and king not in check
-        boolean stalemate = false;
-//        if (teamColor in stalemate) {
-//            stalemate = true;
-//        } else {
-//            stalemate = false;
-//        }
-        return stalemate;
+        if (!isInCheck(teamColor)) {
+            for (int x = 1; x < 9; x++) {
+                for (int y = 1; y < 9; y++) {
+                    ChessPiece piece = board.getPiece(new ChessPosition(x, y));
+                    if (piece != null && piece.getTeamColor() == teamColor) {
+                        if (!validMoves(new ChessPosition(x, y)).isEmpty()) {
+                            return false;
+                        }
+
+                    }
+                }
+            }
+            return true;
         }
+        return false;
+    }
 
     /**
      * Sets this game's chessboard with a given board
