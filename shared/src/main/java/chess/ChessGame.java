@@ -104,6 +104,27 @@ public class ChessGame {
     }
 
 
+
+    /**
+     *     HELPER FOR CHECKMATE CREATE COPY OF BOARD
+     */
+    public void pawnPromote (ChessMove move, ChessPiece piece) {
+        if (move.getPromotionPiece() == ChessPiece.PieceType.QUEEN) {
+            board.addPiece(move.getEndPosition(), null);
+            board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), ChessPiece.PieceType.QUEEN));
+        } else if (move.getPromotionPiece() == ChessPiece.PieceType.BISHOP) {
+            board.addPiece(move.getEndPosition(), null);
+            board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), ChessPiece.PieceType.BISHOP));
+        } else if (move.getPromotionPiece() == ChessPiece.PieceType.ROOK) {
+            board.addPiece(move.getEndPosition(), null);
+            board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), ChessPiece.PieceType.ROOK));
+        } else if (move.getPromotionPiece() == ChessPiece.PieceType.KNIGHT) {
+            board.addPiece(move.getEndPosition(), null);
+            board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), ChessPiece.PieceType.KNIGHT));
+        }
+    }
+
+
     /**
      * Makes a move in a chess game
      *
@@ -114,8 +135,11 @@ public class ChessGame {
 
         // above is likely wrong but follows an essential line of thinking
         ChessPiece piece = board.getPiece(move.getStartPosition());
-        if (piece != null && !validMoves(move.getStartPosition()).isEmpty() && piece.getTeamColor() == getTeamTurn()) {
+        if (piece != null && validMoves(move.getStartPosition()).contains(move) && piece.getTeamColor() == getTeamTurn()) {
             movePiece(piece, move.getStartPosition(), move.getEndPosition());
+            if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+                pawnPromote(move, piece);
+            }
         } else {
             throw new InvalidMoveException();
         }
