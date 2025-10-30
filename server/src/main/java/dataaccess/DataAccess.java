@@ -1,19 +1,32 @@
 package dataaccess;
 
-import exception.ResponseException;
+import dataaccess.DataAccessException;
 import model.*;
 
 public interface DataAccess {
-    Pet addPet(Pet pet) throws ResponseException;
 
-    PetList listPets() throws ResponseException;
+    UserData getUser(String username) throws DataAccessException;
+    void createUser(UserData registerRequest) throws DataAccessException;
+    void createAuth(AuthData newAuthToken) throws DataAccessException;
 
-    Pet getPet(int id) throws ResponseException;
+    // Clear Methods
+    void clearUserData() throws DataAccessException;
+    void clearAuthData() throws DataAccessException;
+    void clearGameData() throws DataAccessException;
 
-    void deletePet(Integer id) throws ResponseException;
 
-    void deleteAllPets() throws ResponseException;
+//    GameData addData(GameData game) throws DataAccessException;
+//
+//    Gamelist listGames() throws DataAccessException;
+//
+//    Pet getPet(int id) throws DataAccessException;
+//
+//    void deletePet(Integer id) throws DataAccessException;
+//
+//    void deleteAllData() throws DataAccessException;
 }
+
+
 
 //MAKE IT CRUD:
 //Create objects in the data store
@@ -32,3 +45,31 @@ public interface DataAccess {
 //createAuth: Create a new authorization.
 //getAuth: Retrieve an authorization given an authToken.
 //deleteAuth: Delete an authorization so that it is no longer valid.
+
+
+//package model;
+//
+//import com.google.gson.*;
+//
+//public record Pet(int id, String name, PetType type) {
+//
+//    public String sound() {
+//        return switch (type) {
+//            case DOG -> "bark";
+//            case CAT -> "meow";
+//            case FISH -> "bubbles";
+//            case FROG -> "ribbit";
+//            case BIRD -> "tweet";
+//            case RAT -> "squeak";
+//            case ROCK -> "roll";
+//        };
+//    }
+//
+//    public Pet setId(int id) {
+//        return new Pet(id, this.name, this.type);
+//    }
+//
+//    public String toString() {
+//        return new Gson().toJson(this);
+//    }
+//}

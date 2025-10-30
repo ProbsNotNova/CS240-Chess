@@ -1,35 +1,73 @@
 package dataaccess;
 
+import chess.ChessGame;
 import model.*;
 
 import java.util.HashMap;
 
 public class MemoryDataAccess implements DataAccess {
-    private int nextId = 1;
-    final private HashMap<Integer, Pet> pets = new HashMap<>();
+//    private int nextId = 1;
+    final private HashMap<Integer, GameData> games = new HashMap<>();
+    final private HashMap<String, AuthData> authTokens = new HashMap<>();
+    final private HashMap<String, UserData> users = new HashMap<>();
 
-    public Pet addPet(Pet pet) {
-        pet = new Pet(nextId++, pet.name(), pet.type());
-
-        pets.put(pet.id(), pet);
-        return pet;
+    public UserData getUser(String username) {
+        if (users.containsKey(username)) {
+            return users.get(username);
+        }
+        return null;
+    }
+    public void createUser(UserData registerRequest) {
+        users.put(registerRequest.username(), registerRequest);
+    }
+    public void createAuth(AuthData newAuthToken) {
+        authTokens.put(newAuthToken.username(), newAuthToken);
     }
 
-    public PetList listPets() {
-        return new PetList(pets.values());
+
+
+    // DB Clear Methods
+    public void clearUserData() {
+        users.clear();
     }
-
-
-    public Pet getPet(int id) {
-        return pets.get(id);
+    public void clearAuthData() {
+        authTokens.clear();
     }
-
-    public void deletePet(Integer id) {
-        pets.remove(id);
+    public void clearGameData() {
+        games.clear();
     }
+    //
+//    public GameData createGame(ChessGame game) {
+//        game = new Pet(nextId++, pet.name(), pet.type());
+//
+//        games.put(game.id(), game);
+//        return game;
+//    }
+//
+//    public DataAccess listPets() {
+//        return new DataAccess(pets.values());
+//    }
+//
+//
+//    public DataAccess getGame(int id) {
+//        return games.get(id);
+//    }
+//    public AuthData getAuthToken(int id) {
+//        return authTokens.get(id);
+//    }
+//    public UserData getUser(int id) {
+//        return users.get(id);
+//    }
 
-    public void deleteAllPets() {
-        pets.clear();
+//    public void deletePet(Integer id) {
+//        pets.remove(id);
+//    }
+
+    public void deleteAllData() {
+        games.clear();
+        authTokens.clear();
+        users.clear();
+
     }
 }
 
