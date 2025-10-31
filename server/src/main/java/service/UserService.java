@@ -3,10 +3,6 @@ package service;
 import chess.ChessGame;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import dataaccess.MemoryDataAccess;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -35,10 +31,10 @@ public class UserService {
                 // AlreadyTakenException
                 throw new DataAccessException("Error: username already taken", 403);
             } else {
-                    dataAccess.createUser(registerRequest);
-                    AuthData authToken = new AuthData(registerRequest.username(), generateToken());
-                    dataAccess.createAuth(authToken);
-                    return authToken;
+                dataAccess.createUser(registerRequest);
+                AuthData authToken = new AuthData(registerRequest.username(), generateToken());
+                dataAccess.createAuth(authToken);
+                return authToken;
             }
     }
 
@@ -52,15 +48,15 @@ public class UserService {
                 if (retrievedData == null || !loginRequest.password().equals(retrievedData.password())) {
                     // UnauthorizedException
                     throw new DataAccessException("Error: Unauthorized", 401);
-                 } else {
-                     AuthData authToken = new AuthData(loginRequest.username(), generateToken());
-                     dataAccess.createAuth(authToken);
-                     return authToken;
-                 }
+                } else {
+                    AuthData authToken = new AuthData(loginRequest.username(), generateToken());
+                    dataAccess.createAuth(authToken);
+                    return authToken;
+                }
         }
     }
 
-    // logout
+    // Logout
     public void logout(String logoutRequest) throws DataAccessException {
         AuthData retrievedToken = dataAccess.getAuth(logoutRequest);
         if (retrievedToken == null) {
@@ -70,6 +66,7 @@ public class UserService {
             dataAccess.deleteAuth(logoutRequest);
         }
     }
+    // List All Games
     public Collection<GameData> listGames(String listGamesRequest) throws DataAccessException {
         AuthData retrievedToken = dataAccess.getAuth(listGamesRequest);
         if (retrievedToken == null) {
@@ -80,6 +77,7 @@ public class UserService {
         }
     }
 
+    // Create Game
     public int createGame(String createGameReqAuth, String createGameReq) throws DataAccessException {
         if (createGameReqAuth == null || createGameReq == null) {
             throw new DataAccessException("Error: bad request", 400);
@@ -93,6 +91,7 @@ public class UserService {
         }
     }
 
+    // Join Game
     public GameData joinGame(String joinGameReqAuth, String playerColor, int joinGameReqID) throws DataAccessException {
         if (joinGameReqAuth == null || joinGameReqID <= 0 || playerColor == null || !(playerColor.equals("WHITE") || playerColor.equals("BLACK"))) { // need better bad player cases
             throw new DataAccessException("Error: bad request", 400);
@@ -115,8 +114,6 @@ public class UserService {
         }
     }
 
-
-
     // Clear
     public void clearApp() throws DataAccessException {
         try {
@@ -126,53 +123,4 @@ public class UserService {
         }
     }
 
-
-
-
 }
-
-//public class UserService {
-//
-//    private final DataAccess dataAccess;
-//
-//    public ChessService(DataAccess dataAccess) {
-//        this.dataAccess = dataAccess;
-//    }
-//
-//    // Pet Shop is very simple.
-//    // A more complicated application would do the business logic in the service.
-//
-//    public Pet addPet(Pet pet) throws DataAccessException {
-//        if (pet.type() == PetType.DOG && pet.name().equals("fleas")) {
-//            throw new DataAccessException(DataAccessException.Code.ClientError, "Error: no dogs with fleas");
-//        }
-//        return dataAccess.addPet(pet);
-//    }
-//
-//    public PetList listPets() throws DataAccessException {
-//        return dataAccess.listPets();
-//    }
-//
-//    public Pet getPet(int id) throws DataAccessException {
-//        validateId(id);
-//        return dataAccess.getPet(id);
-//    }
-//
-//    public void deletePet(Integer id) throws DataAccessException {
-//        validateId(id);
-//        dataAccess.deletePet(id);
-//    }
-//
-//    public void deleteAllPets() throws DataAccessException {
-//        Collection<Pet> pets = dataAccess.listPets();
-//        if (!pets.isEmpty()) {
-//            dataAccess.deleteAllPets();
-//        }
-//    }
-
-//    private void validateId(int id) throws DataAccessException {
-//        if (id <= 0) {
-//            throw new DataAccessException(DataAccessException.Code.ClientError, "Error: invalid pet ID");
-//        }
-//    }
-//}

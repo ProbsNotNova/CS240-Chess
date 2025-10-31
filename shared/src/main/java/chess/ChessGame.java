@@ -14,30 +14,17 @@ public class ChessGame {
 
     private ChessBoard board;
     private boolean whiteTurn;
-//    private boolean whiteKingRookMoved;
-//    private boolean blackKingRookMoved;
-//    private boolean whiteKingNeverCheck;
-//    private boolean blackKingNeverCheck;
 
     public ChessGame() {
         this.board = new ChessBoard();
         board.resetBoard();
         this.whiteTurn = true;
-//        this.whiteKingRookMoved = false;
-//        this.blackKingRookMoved = false;
-//        this.whiteKingNeverCheck = true;
-//        this.blackKingNeverCheck = true;
     }
 
     /**
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-//        TeamColor turn = TeamColor.BLACK;
-//        if (whiteTurn) {
-//            turn = TeamColor.WHITE;
-//        }
-//        return turn;
         return whiteTurn ? TeamColor.WHITE : TeamColor.BLACK;
     }
 
@@ -54,7 +41,6 @@ public class ChessGame {
         } else if (!whiteTurn && team == TeamColor.WHITE) {
             whiteTurn = true;
         }
-        //whiteTurn = team ? TeamColor.WHITE : TeamColor.BLACK;
     }
 
     /**
@@ -159,14 +145,6 @@ public class ChessGame {
                 board.addPiece(move.getEndPosition(), null);
                 board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), promotionPiece));
             }
-            // Castling
-//            if (kingOrRook) {
-//                // Moved? Check
-//                if (whiteTurn) {
-//                    whiteKingRookMoved = true;
-//                } else { blackKingRookMoved = true;}
-//
-//            }
         } else {
             throw new InvalidMoveException();
         }

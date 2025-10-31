@@ -7,8 +7,8 @@ import chess.ChessPosition;
 
 import java.util.Collection;
 
-public interface moveCalc {
-    default public boolean checkPos(ChessPosition myPosition, Collection<ChessMove> validMoves, ChessBoard board,
+public interface MoveCalc {
+    default boolean checkPos(ChessPosition myPosition, Collection<ChessMove> validMoves, ChessBoard board,
                                     ChessGame.TeamColor ally, ChessPosition posCheck) {
         if (board.getPiece(posCheck) == null) {
             validMoves.add(new ChessMove(myPosition, posCheck, null) );

@@ -5,7 +5,7 @@ import chess.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class RookCalc implements moveCalc{
+public class RookCalc implements MoveCalc {
 
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         int col = myPosition.getColumn();

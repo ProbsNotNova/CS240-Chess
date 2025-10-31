@@ -1,10 +1,7 @@
 package chess;
 
 import chess.calculators.*;
-
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -59,26 +56,26 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         ChessPiece piece = board.getPiece(myPosition);
         if (piece.getPieceType() == PieceType.BISHOP) { //hardcode case rn
-            BishopCalc BiCalc = new BishopCalc();
-            return BiCalc.pieceMoves(board, myPosition);
+            BishopCalc biCalc = new BishopCalc();
+            return biCalc.pieceMoves(board, myPosition);
         } else if (piece.getPieceType() == PieceType.ROOK) {
-            RookCalc RooCalc = new RookCalc();
-            return RooCalc.pieceMoves(board, myPosition);
+            RookCalc rooCalc = new RookCalc();
+            return rooCalc.pieceMoves(board, myPosition);
         } else if (piece.getPieceType() == PieceType.QUEEN) {
-            BishopCalc BiCalc = new BishopCalc();
-            RookCalc   RooCalc = new RookCalc();
-            Collection<ChessMove> QueenMoves = BiCalc.pieceMoves(board, myPosition);
-            QueenMoves.addAll(RooCalc.pieceMoves(board, myPosition));
-            return QueenMoves;
+            BishopCalc biCalc = new BishopCalc();
+            RookCalc   rooCalc = new RookCalc();
+            Collection<ChessMove> queenMoves = biCalc.pieceMoves(board, myPosition);
+            queenMoves.addAll(rooCalc.pieceMoves(board, myPosition));
+            return queenMoves;
         } else if (piece.getPieceType() == PieceType.KING) {
-            KingCalc KinCalc = new KingCalc();
-            return KinCalc.pieceMoves(board, myPosition);
+            KingCalc kinCalc = new KingCalc();
+            return kinCalc.pieceMoves(board, myPosition);
         } else if (piece.getPieceType() == PieceType.KNIGHT) {
-            KnightCalc KniCalc = new KnightCalc();
-            return KniCalc.pieceMoves(board, myPosition);
+            KnightCalc kniCalc = new KnightCalc();
+            return kniCalc.pieceMoves(board, myPosition);
         } else if (piece.getPieceType() == PieceType.PAWN) {
-            PawnCalc PawCalc = new PawnCalc();
-            return PawCalc.pieceMoves(board, myPosition);
+            PawnCalc pawCalc = new PawnCalc();
+            return pawCalc.pieceMoves(board, myPosition);
         }
         return null;
     }
