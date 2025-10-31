@@ -52,19 +52,6 @@ public class ChessGame {
     }
 
     /**
-     *     CASTLING METHOD
-     */
-//    public boolean canCastle () {
-//        if (whiteTurn && !whiteKingRookMoved &&
-//            whiteKingNeverCheck) {
-//            return true;
-//        } else if (!blackKingRookMoved && blackKingNeverCheck) {
-//            return true;
-//        }
-//        return false;
-//    }
-
-    /**
      *     HELPER FOR VALIDMOVES MOVES A SINGLE PIECE SOMEWHERE
      */
     public void movePiece (ChessPiece piece, ChessPosition startPosition, ChessPosition endPosition) {
@@ -85,30 +72,18 @@ public class ChessGame {
             Collection<ChessMove> pieceMoves = piece.pieceMoves(board, startPosition);
             Collection<ChessMove> validMoves = new ArrayList();
             for (ChessMove move : pieceMoves) {
+                ChessPosition mvEndPos = move.getEndPosition();
                 ChessPiece enemyCopy = null; // dumby initialize for IDE sake
-                if (board.getPiece(move.getEndPosition()) != null && board.getPiece(move.getEndPosition()).getTeamColor() != piece.getTeamColor()) {
-                    enemyCopy = board.getPiece(move.getEndPosition());
+                if (board.getPiece(mvEndPos) != null && board.getPiece(mvEndPos).getTeamColor() != piece.getTeamColor()) {
+                    enemyCopy = board.getPiece(mvEndPos);
                 }
-                movePiece(piece, startPosition, move.getEndPosition());
+                movePiece(piece, startPosition, mvEndPos);
                 if (!isInCheck(piece.getTeamColor())) {
                     validMoves.add(move);
-                } /*else { //else added for castling check condition
-                    if (piece.getTeamColor() == TeamColor.WHITE) {
-                        whiteKingNeverCheck = false;
-                    } else {blackKingNeverCheck = false;}
-                }*/
+                }
                 movePiece(piece, move.getEndPosition(), startPosition);
                 board.addPiece(move.getEndPosition(), enemyCopy);
             }
-
-            // put checks for castle or enpassant here so they are set
-
-            // Castling Check
-//            boolean kingOrRook = piece.getPieceType() == (ChessPiece.PieceType.KING) || piece.getPieceType() == (ChessPiece.PieceType.ROOK);
-//            if (canCastle() && kingOrRook) {
-//                validMoves.add(new ChessMove(startPosition)));
-//            }
-
             return validMoves; // Might want to figure out how to avoid
         } else {return null;}  // The two returns here or change idk
     }
@@ -123,20 +98,6 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         if (piece != null && validMoves(move.getStartPosition()).contains(move) && piece.getTeamColor() == getTeamTurn()) {
-//            boolean kingOrRook = piece.getPieceType() == (ChessPiece.PieceType.KING) || piece.getPieceType() == (ChessPiece.PieceType.ROOK);
-//                // Castling check then completion
-//            if (canCastle()) {
-//                int moveRow = 1;//move.getEndPosition().getRow();
-//                int moveCol = move.getEndPosition().getColumn();
-//                if (piece.getPieceType() == (ChessPiece.PieceType.KING)) {
-//                    if (moveCol > 5) {
-//                        movePiece(board.getPiece(new ChessPosition(moveRow, moveCol+1)),new ChessPosition(moveRow, moveCol+1), new ChessPosition(moveRow, moveCol-1));
-//                    } else {
-//                        movePiece(board.getPiece(new ChessPosition(moveRow, moveCol-2)),new ChessPosition(moveRow, moveCol-2), new ChessPosition(moveRow, moveCol+1));
-//                    }
-//                } else if (piece.getPieceType() == (ChessPiece.PieceType.ROOK)) {
-//                }
-//            }
             movePiece(piece, move.getStartPosition(), move.getEndPosition());
 
             // Pawn Promotion
@@ -212,7 +173,7 @@ public class ChessGame {
             for (int x = 1; x < 9; x++) {
                 for (int y = 1; y < 9; y++) {
                     ChessPiece piece = board.getPiece(new ChessPosition(x, y));
-                    if (piece != null && piece.getTeamColor() == teamColor && !validMoves(new ChessPosition(x, y)).isEmpty()) {
+                    if (piece!=null && piece.getTeamColor()==teamColor && !validMoves(new ChessPosition(x, y)).isEmpty()) {
                         return false;
                     }
                 }
