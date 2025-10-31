@@ -17,11 +17,9 @@ import java.util.UUID;
 public class UserService {
 
     private final DataAccess dataAccess;
-    public boolean loggedOut;
 
     public UserService(DataAccess dataAccess) {
         this.dataAccess = dataAccess;
-        this.loggedOut = true;
     }
 
     // generate new Auth Token
@@ -37,14 +35,10 @@ public class UserService {
                 // AlreadyTakenException
                 throw new DataAccessException("Error: username already taken", 403);
             } else {
-                try {
                     dataAccess.createUser(registerRequest);
                     AuthData authToken = new AuthData(registerRequest.username(), generateToken());
                     dataAccess.createAuth(authToken);
                     return authToken;
-                } catch (DataAccessException e) {
-                    throw new DataAccessException(e.getMessage(), e.getStatusCode());
-                }
             }
     }
 
@@ -61,7 +55,6 @@ public class UserService {
                  } else {
                      AuthData authToken = new AuthData(loginRequest.username(), generateToken());
                      dataAccess.createAuth(authToken);
-                     loggedOut = false;
                      return authToken;
                  }
         }
@@ -70,12 +63,11 @@ public class UserService {
     // logout
     public void logout(String logoutRequest) throws DataAccessException {
         AuthData retrievedToken = dataAccess.getAuth(logoutRequest);
-        if (retrievedToken/*.authToken()*/ == null || loggedOut) {
+        if (retrievedToken == null) {
             // UnauthorizedException
             throw new DataAccessException("Error: Unauthorized", 401);
         } else {
-            dataAccess.deleteAuth(logoutRequest); //.authToken()
-            loggedOut = true;
+            dataAccess.deleteAuth(logoutRequest);
         }
     }
     public Collection<GameData> listGames(String listGamesRequest) throws DataAccessException {
@@ -84,11 +76,7 @@ public class UserService {
             // UnauthorizedException
             throw new DataAccessException("Error: Unauthorized", 401);
         } else {
-            try {
                 return dataAccess.listGames();
-            } catch (DataAccessException e) {
-                throw e;
-            }
         }
     }
 
@@ -101,17 +89,12 @@ public class UserService {
             // UnauthorizedException
             throw new DataAccessException("Error: Unauthorized", 401);
         } else {
-            try {
                 return dataAccess.createGame(createGameReq);
-
-            } catch (DataAccessException e) {
-                throw e;
-            }
         }
     }
 
     public GameData joinGame(String joinGameReqAuth, String playerColor, int joinGameReqID) throws DataAccessException {
-        if (joinGameReqAuth == null || !playerColor.equals("WHITE") || !playerColor.equals("BLACK") || joinGameReqID <= 0) {
+        if (joinGameReqAuth == null || joinGameReqID <= 0 || playerColor == null || !(playerColor.equals("WHITE") || playerColor.equals("BLACK"))) { // need better bad player cases
             throw new DataAccessException("Error: bad request", 400);
         }
         AuthData retrievedToken = dataAccess.getAuth(joinGameReqAuth);
@@ -119,20 +102,16 @@ public class UserService {
             // UnauthorizedException
             throw new DataAccessException("Error: Unauthorized", 401);
         } else {
-            try {
-                ChessGame.TeamColor parsedPlayerColor;
-                if (playerColor.equals("WHITE") && dataAccess.getGame(joinGameReqID).whiteUsername() == null) {
-                    parsedPlayerColor = ChessGame.TeamColor.WHITE;
-                } else if (dataAccess.getGame(joinGameReqID).blackUsername() == null) {
-                    parsedPlayerColor = ChessGame.TeamColor.BLACK;
-                } else {
-                    throw new DataAccessException("Error: Already taken", 403);
-                }
-                    dataAccess.updateGame(joinGameReqID, parsedPlayerColor, retrievedToken.username());
-                return dataAccess.getGame(joinGameReqID);
-            } catch (DataAccessException e) {
-                throw e;
+            ChessGame.TeamColor parsedPlayerColor;
+            if (playerColor.equals("WHITE") && dataAccess.getGame(joinGameReqID).whiteUsername() == null) {
+                parsedPlayerColor = ChessGame.TeamColor.WHITE;
+            } else if (dataAccess.getGame(joinGameReqID).blackUsername() == null) {
+                parsedPlayerColor = ChessGame.TeamColor.BLACK;
+            } else {
+                throw new DataAccessException("Error: Already taken", 403);
             }
+                dataAccess.updateGame(joinGameReqID, parsedPlayerColor, retrievedToken.username());
+            return dataAccess.getGame(joinGameReqID);
         }
     }
 

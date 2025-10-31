@@ -58,7 +58,7 @@ public class Server {
     }
 
     public void LogoutHandler( Context context) {
-        var userInput = new Gson().fromJson(context.header("authorization"), String.class);
+        var userInput = context.header("authorization");
         try {
             service.logout(userInput);
         } catch (DataAccessException e) {
@@ -67,7 +67,7 @@ public class Server {
     }
 
     public void ListGamesHandler( Context context) {
-        var userInput = new Gson().fromJson(context.header("authorization"), String.class);
+        var userInput = context.header("authorization");
         try {
             context.result(new Gson().toJson(new listGamesResult(service.listGames(userInput))));
         } catch (DataAccessException e) {
@@ -76,17 +76,17 @@ public class Server {
     }
 
     public void CreateGameHandler( Context context) {
-        var userInputAuth = new Gson().fromJson(context.header("authorization"), String.class);
+        var userInputAuth = context.header("authorization");
         createGameRequest gameRequest = new Gson().fromJson(context.body(), createGameRequest.class);
         try {
-            context.result(new Gson().toJson(service.createGame(userInputAuth, gameRequest.gameName())));
+            context.result(new Gson().toJson(Map.of("gameID", service.createGame(userInputAuth, gameRequest.gameName()))));
         } catch (DataAccessException e) {
             exceptionHandler(e, context); // some kind of syntax error for JSON comes up
         }
     }
 
     public void JoinGameHandler( Context context) {
-        var userInputAuth = new Gson().fromJson(context.header("authorization"), String.class);
+        var userInputAuth = context.header("authorization");
         joinGameRequest gameRequest = new Gson().fromJson(context.body(), joinGameRequest.class);
         try {
             context.result(new Gson().toJson(service.joinGame(userInputAuth, gameRequest.playerColor(), gameRequest.gameID())));
