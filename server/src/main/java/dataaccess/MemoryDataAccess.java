@@ -3,7 +3,9 @@ package dataaccess;
 import chess.ChessGame;
 import model.*;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.function.BiConsumer;
 
 public class MemoryDataAccess implements DataAccess {
 //    private int nextId = 1;
@@ -24,14 +26,31 @@ public class MemoryDataAccess implements DataAccess {
         }
         return null;
     }
+    public GameData getGame(int gameID) {
+        if (games.containsKey(gameID)) {
+            return games.get(gameID);
+        }
+        return null;
+    }
 
+    public Collection<GameData> listGames() {
+        return games.values();
+    }
+
+//    public void updateGame(int gameID, ChessGame.TeamColor playerColor, String user) {
+//        if (playerColor == ChessGame.TeamColor.WHITE) {
+//            getGame(gameID).whiteUsername() = getUser(user).username();
+//        } else {
+//            getGame(gameID).blackUsername()
+//        }
+//    }
 
     // Create Methods
     public void createUser(UserData registerRequest) {
         users.put(registerRequest.username(), registerRequest);
     }
     public void createAuth(AuthData newAuthToken) {
-        authTokens.put(newAuthToken.username(), newAuthToken);
+        authTokens.put(newAuthToken.authToken(), newAuthToken);
     }
 
     // Delete Methods

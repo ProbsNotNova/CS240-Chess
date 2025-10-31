@@ -1,4 +1,5 @@
 package server;
+import chess.ChessGame;
 import com.google.gson.Gson;
 import model.*;
 //import server.websocket.WebSocketHandler;
@@ -8,6 +9,9 @@ import service.UserService;
 import io.javalin.*;
 import io.javalin.http.Context;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class Server {
@@ -28,9 +32,9 @@ public class Server {
         // ADD SAME FOR EACH OTHER ENDPOINT FROM DIAGRAM
         javalin.post("/session", this::LoginHandler);
         javalin.delete("/session", this::LogoutHandler);
-//        javalin.get("/game", context -> ListGamesHandler(context));
+        javalin.get("/game", this::ListGamesHandler);
 //        javalin.post("/game", context -> CreateGameHandler(context));
-//        javalin.put("/game", context -> JoinGameHandler(context));
+        javalin.put("/game", this::JoinGameHandler);
         javalin.delete("/db", this::ClearDataBaseHandler);
     }
 
@@ -61,16 +65,16 @@ public class Server {
             exceptionHandler(e, context); // some kind of syntax error for JSON comes up
         }
     }
-//
-//    public void ListGamesHandler( Context context) {
-//        var userInput = new Gson().fromJson(context.body(), UserData.class);
-//        try {
-//            context.result(new Gson().toJson(service.listGames(userInput)));
-//        } catch (DataAccessException e) {
-//            exceptionHandler(e, context); // some kind of syntax error for JSON comes up
-//        }
-//    }
-//
+
+    public void ListGamesHandler( Context context) {
+        var userInput = new Gson().fromJson(context.header("authorization"), String.class);
+        try {
+            context.result(new Gson().toJson(service.listGames(userInput)));
+        } catch (DataAccessException e) {
+            exceptionHandler(e, context); // some kind of syntax error for JSON comes up
+        }
+    }
+
 //    public void CreateGameHandler( Context context) {
 //        var userInput = new Gson().fromJson(context.body(), UserData.class);
 //        try {
@@ -80,14 +84,16 @@ public class Server {
 //        }
 //    }
 //
-//    public void JoinGameHandler( Context context) {
-//        var userInput = new Gson().fromJson(context.body(), UserData.class);
-//        try {
-//            context.result(new Gson().toJson(service.joinGame(userInput)));
-//        } catch (DataAccessException e) {
-//            exceptionHandler(e, context); // some kind of syntax error for JSON comes up
-//        }
-//    }
+    public void JoinGameHandler( Context context) {
+        var userInputAuth = new Gson().fromJson(context.header("authorization"), String.class);
+        var userInputColor = new Gson().fromJson(context.body(), ChessGame.TeamColor.class);
+        var userInputInt = new Gson().fromJson(context.body(), int.class);
+        try {
+            context.result(new Gson().toJson(service.joinGame(userInputAuth, userInputColor, userInputInt)));
+        } catch (DataAccessException e) {
+            exceptionHandler(e, context); // some kind of syntax error for JSON comes up
+        }
+    }
 
     // Clear Database Handler
     public void ClearDataBaseHandler(Context context) {

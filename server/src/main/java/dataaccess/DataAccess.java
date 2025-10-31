@@ -3,11 +3,17 @@ package dataaccess;
 import dataaccess.DataAccessException;
 import model.*;
 
+import java.util.Collection;
+
 public interface DataAccess {
 
     // Get Methods
     UserData getUser(String username) throws DataAccessException;
     AuthData getAuth(String authToken) throws DataAccessException;
+    GameData getGame(int gameID) throws DataAccessException;
+
+    Collection<GameData> listGames() throws DataAccessException;
+
 
     // Create Methods
     void createUser(UserData registerRequest) throws DataAccessException;
@@ -17,6 +23,7 @@ public interface DataAccess {
 
     // Clear Methods
     void clearAllData() throws DataAccessException;
+
 
 
 //    GameData addData(GameData game) throws DataAccessException;

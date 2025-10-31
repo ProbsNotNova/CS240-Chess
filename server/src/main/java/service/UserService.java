@@ -1,11 +1,13 @@
 package service;
 
+import chess.ChessGame;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 
 import java.util.Collection;
@@ -51,7 +53,6 @@ public class UserService {
             // Bad Request Exception
             throw new DataAccessException("Error: bad request", 400);
         } else {
-//            try {
                 UserData retrievedData = dataAccess.getUser(loginRequest.username());
                 if (retrievedData == null || !loginRequest.password().equals(retrievedData.password())) {
                     // UnauthorizedException
@@ -62,29 +63,51 @@ public class UserService {
                      loggedOut = false;
                      return authToken;
                  }
-//            } catch (DataAccessException e) {
-////                throw e;
-//                throw new DataAccessException(e.getMessage(), e.getStatusCode());
-
-//            }
         }
     }
 
     // logout
     public void logout(String logoutRequest) throws DataAccessException {
-//        try {
-        // INVALID AUTH FAILS BUT NORMAL PASSES AND USING RETRIEVEDTOKEN STUFF SWITCHES THEM
-            AuthData retrievedToken = dataAccess.getAuth(logoutRequest);
-            if (logoutRequest == null || loggedOut) {
+        AuthData retrievedToken = dataAccess.getAuth(logoutRequest);
+        if (retrievedToken/*.authToken()*/ == null || loggedOut) {
             // UnauthorizedException
-                throw new DataAccessException("Error: Unauthorized", 401);
-            } else {
-                dataAccess.deleteAuth(logoutRequest); //.authToken()
-                loggedOut = true;
+            throw new DataAccessException("Error: Unauthorized", 401);
+        } else {
+            dataAccess.deleteAuth(logoutRequest); //.authToken()
+            loggedOut = true;
+        }
+    }
+    public Collection<GameData> listGames(String listGamesRequest) throws DataAccessException {
+        AuthData retrievedToken = dataAccess.getAuth(listGamesRequest);
+        if (retrievedToken == null) {
+            // UnauthorizedException
+            throw new DataAccessException("Error: Unauthorized", 401);
+        } else {
+            try {
+                return dataAccess.listGames();
+            } catch (DataAccessException e) {
+                throw e;
             }
-//        } catch (DataAccessException e) {
-//            throw new DataAccessException(e.getMessage(), e.getStatusCode());
-//        }
+        }
+    }
+
+    public GameData joinGame(String joinGameReqAuth, ChessGame.TeamColor playerColor, int joinGameReqID) throws DataAccessException {
+        if (joinGameReqAuth == null || playerColor == null || joinGameReqID <= 0) {
+            throw new DataAccessException("Error: bad request", 400);
+        }
+        AuthData retrievedToken = dataAccess.getAuth(joinGameReqAuth);
+        if (retrievedToken == null) {
+            // UnauthorizedException
+            throw new DataAccessException("Error: Unauthorized", 401);
+        } else {
+            try {
+
+//                    dataAccess.updateGame(joinGameReqID);
+               return dataAccess.getGame(joinGameReqID);
+            } catch (DataAccessException e) {
+                throw e;
+            }
+        }
     }
 
 
@@ -98,13 +121,6 @@ public class UserService {
         }
     }
 
-
-//    public LoginResult login(LoginRequest loginRequest) {
-//
-//    }
-//    public void logout(LogoutRequest logoutRequest) {
-//
-//    }
 
 
 
