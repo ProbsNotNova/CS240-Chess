@@ -33,7 +33,7 @@ public class Server {
         javalin.post("/session", this::LoginHandler);
         javalin.delete("/session", this::LogoutHandler);
         javalin.get("/game", this::ListGamesHandler);
-//        javalin.post("/game", context -> CreateGameHandler(context));
+        javalin.post("/game", this::CreateGameHandler);
         javalin.put("/game", this::JoinGameHandler);
         javalin.delete("/db", this::ClearDataBaseHandler);
     }
@@ -69,27 +69,27 @@ public class Server {
     public void ListGamesHandler( Context context) {
         var userInput = new Gson().fromJson(context.header("authorization"), String.class);
         try {
-            context.result(new Gson().toJson(service.listGames(userInput)));
+            context.result(new Gson().toJson(new listGamesResult(service.listGames(userInput))));
         } catch (DataAccessException e) {
             exceptionHandler(e, context); // some kind of syntax error for JSON comes up
         }
     }
 
-//    public void CreateGameHandler( Context context) {
-//        var userInput = new Gson().fromJson(context.body(), UserData.class);
-//        try {
-//            context.result(new Gson().toJson(service.createGame(userInput)));
-//        } catch (DataAccessException e) {
-//            exceptionHandler(e, context); // some kind of syntax error for JSON comes up
-//        }
-//    }
-//
+    public void CreateGameHandler( Context context) {
+        var userInputAuth = new Gson().fromJson(context.header("authorization"), String.class);
+        createGameRequest gameRequest = new Gson().fromJson(context.body(), createGameRequest.class);
+        try {
+            context.result(new Gson().toJson(service.createGame(userInputAuth, gameRequest.gameName())));
+        } catch (DataAccessException e) {
+            exceptionHandler(e, context); // some kind of syntax error for JSON comes up
+        }
+    }
+
     public void JoinGameHandler( Context context) {
         var userInputAuth = new Gson().fromJson(context.header("authorization"), String.class);
-        var userInputColor = new Gson().fromJson(context.body(), ChessGame.TeamColor.class);
-        var userInputInt = new Gson().fromJson(context.body(), int.class);
+        joinGameRequest gameRequest = new Gson().fromJson(context.body(), joinGameRequest.class);
         try {
-            context.result(new Gson().toJson(service.joinGame(userInputAuth, userInputColor, userInputInt)));
+            context.result(new Gson().toJson(service.joinGame(userInputAuth, gameRequest.playerColor(), gameRequest.gameID())));
         } catch (DataAccessException e) {
             exceptionHandler(e, context); // some kind of syntax error for JSON comes up
         }

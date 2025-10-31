@@ -1,5 +1,6 @@
 package dataaccess;
 
+import chess.ChessGame;
 import dataaccess.DataAccessException;
 import model.*;
 
@@ -12,12 +13,14 @@ public interface DataAccess {
     AuthData getAuth(String authToken) throws DataAccessException;
     GameData getGame(int gameID) throws DataAccessException;
 
+    // Game Methods
     Collection<GameData> listGames() throws DataAccessException;
-
+    void updateGame(int gameID, ChessGame.TeamColor parsedPlayerColor, String user) throws DataAccessException;
 
     // Create Methods
     void createUser(UserData registerRequest) throws DataAccessException;
     void createAuth(AuthData newAuthToken) throws DataAccessException;
+    int createGame(String gameName) throws DataAccessException;
 
     void deleteAuth(String authToken) throws DataAccessException;
 

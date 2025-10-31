@@ -3,6 +3,7 @@ package service;
 import chess.ChessGame;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
+import dataaccess.MemoryDataAccess;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -91,8 +92,26 @@ public class UserService {
         }
     }
 
-    public GameData joinGame(String joinGameReqAuth, ChessGame.TeamColor playerColor, int joinGameReqID) throws DataAccessException {
-        if (joinGameReqAuth == null || playerColor == null || joinGameReqID <= 0) {
+    public int createGame(String createGameReqAuth, String createGameReq) throws DataAccessException {
+        if (createGameReqAuth == null || createGameReq == null) {
+            throw new DataAccessException("Error: bad request", 400);
+        }
+        AuthData retrievedToken = dataAccess.getAuth(createGameReqAuth);
+        if (retrievedToken == null) {
+            // UnauthorizedException
+            throw new DataAccessException("Error: Unauthorized", 401);
+        } else {
+            try {
+                return dataAccess.createGame(createGameReq);
+
+            } catch (DataAccessException e) {
+                throw e;
+            }
+        }
+    }
+
+    public GameData joinGame(String joinGameReqAuth, String playerColor, int joinGameReqID) throws DataAccessException {
+        if (joinGameReqAuth == null || !playerColor.equals("WHITE") || !playerColor.equals("BLACK") || joinGameReqID <= 0) {
             throw new DataAccessException("Error: bad request", 400);
         }
         AuthData retrievedToken = dataAccess.getAuth(joinGameReqAuth);
@@ -101,9 +120,16 @@ public class UserService {
             throw new DataAccessException("Error: Unauthorized", 401);
         } else {
             try {
-
-//                    dataAccess.updateGame(joinGameReqID);
-               return dataAccess.getGame(joinGameReqID);
+                ChessGame.TeamColor parsedPlayerColor;
+                if (playerColor.equals("WHITE") && dataAccess.getGame(joinGameReqID).whiteUsername() == null) {
+                    parsedPlayerColor = ChessGame.TeamColor.WHITE;
+                } else if (dataAccess.getGame(joinGameReqID).blackUsername() == null) {
+                    parsedPlayerColor = ChessGame.TeamColor.BLACK;
+                } else {
+                    throw new DataAccessException("Error: Already taken", 403);
+                }
+                    dataAccess.updateGame(joinGameReqID, parsedPlayerColor, retrievedToken.username());
+                return dataAccess.getGame(joinGameReqID);
             } catch (DataAccessException e) {
                 throw e;
             }

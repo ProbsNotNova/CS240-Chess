@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.function.BiConsumer;
 
 public class MemoryDataAccess implements DataAccess {
-//    private int nextId = 1;
+    private int assignedGameID = 1;
     final private HashMap<Integer, GameData> games = new HashMap<>();
     final private HashMap<String, AuthData> authTokens = new HashMap<>();
     final private HashMap<String, UserData> users = new HashMap<>();
@@ -33,17 +33,24 @@ public class MemoryDataAccess implements DataAccess {
         return null;
     }
 
+    // Game Methods
     public Collection<GameData> listGames() {
         return games.values();
     }
-
-//    public void updateGame(int gameID, ChessGame.TeamColor playerColor, String user) {
-//        if (playerColor == ChessGame.TeamColor.WHITE) {
-//            getGame(gameID).whiteUsername() = getUser(user).username();
-//        } else {
-//            getGame(gameID).blackUsername()
+    public void updateGame(int gameID, ChessGame.TeamColor parsedPlayerColor, String user) {
+        GameData game = getGame(gameID);
+        if (getGame(gameID).whiteUsername() == null && parsedPlayerColor == ChessGame.TeamColor.WHITE) {
+            GameData newGame = new GameData(game.gameID(), user, game.blackUsername(), game.gameName(), game.game());
+            games.put(gameID, newGame);
+        } else if (getGame(gameID).blackUsername() == null && parsedPlayerColor == ChessGame.TeamColor.BLACK){
+            GameData newGame = new GameData(game.gameID(), game.whiteUsername(), user, game.gameName(), game.game());
+            games.put(gameID, newGame);
+        }
+//        else {
+//            return null;
 //        }
-//    }
+
+    }
 
     // Create Methods
     public void createUser(UserData registerRequest) {
@@ -51,6 +58,12 @@ public class MemoryDataAccess implements DataAccess {
     }
     public void createAuth(AuthData newAuthToken) {
         authTokens.put(newAuthToken.authToken(), newAuthToken);
+    }
+    public int createGame(String gameName) {
+        GameData newGame = new GameData(assignedGameID, null, null, gameName, new ChessGame());
+        games.put(assignedGameID, newGame);
+        assignedGameID++;
+        return newGame.gameID();
     }
 
     // Delete Methods
@@ -63,6 +76,7 @@ public class MemoryDataAccess implements DataAccess {
         games.clear();
         authTokens.clear();
         users.clear();
+        assignedGameID = 1;
     }
 }
 
