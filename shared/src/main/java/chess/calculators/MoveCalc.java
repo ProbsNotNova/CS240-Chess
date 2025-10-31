@@ -1,10 +1,8 @@
 package chess.calculators;
 
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessMove;
-import chess.ChessPosition;
+import chess.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 public interface MoveCalc {
@@ -19,6 +17,21 @@ public interface MoveCalc {
             return false;
         }
         return true;
+    }
+    default Collection<ChessMove> kniKiValMoves(int[][] directions, ChessPosition myPosition, ChessBoard board) {
+        int col = myPosition.getColumn();
+        int row = myPosition.getRow();
+        Collection<ChessMove> validMoves = new ArrayList();
+        ChessPiece startPiece = board.getPiece(myPosition);
+        ChessGame.TeamColor ally = startPiece.getTeamColor();
+
+        for (int[] move : directions) {
+            if(0 < row-move[0] && row-move[0] < 9 && 0 < col-move[1] && col-move[1] < 9) {
+                ChessPosition posCheck = new ChessPosition(row-move[0], col-move[1]);
+                checkPos(myPosition, validMoves, board, ally, posCheck);
+            }
+        }
+        return validMoves;
     }
 
 
