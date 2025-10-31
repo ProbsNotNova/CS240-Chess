@@ -92,25 +92,25 @@ public class UserService {
     }
 
     // Join Game
-    public GameData joinGame(String ReqAuth, String playerColor, int ReqID) throws DataAccessException {
-        if (ReqAuth==null || ReqID<=0 || playerColor==null || !(playerColor.equals("WHITE") || playerColor.equals("BLACK"))) {
+    public GameData joinGame(String reqAuth, String playerColor, int reqID) throws DataAccessException {
+        if (reqAuth==null || reqID<=0 || playerColor==null || !(playerColor.equals("WHITE") || playerColor.equals("BLACK"))) {
             throw new DataAccessException("Error: bad request", 400);
         }
-        AuthData retrievedToken = dataAccess.getAuth(ReqAuth);
+        AuthData retrievedToken = dataAccess.getAuth(reqAuth);
         if (retrievedToken == null) {
             // UnauthorizedException
             throw new DataAccessException("Error: Unauthorized", 401);
         } else {
             ChessGame.TeamColor parsedPlayerColor;
-            if (playerColor.equals("WHITE") && dataAccess.getGame(ReqID).whiteUsername() == null) {
+            if (playerColor.equals("WHITE") && dataAccess.getGame(reqID).whiteUsername() == null) {
                 parsedPlayerColor = ChessGame.TeamColor.WHITE;
-            } else if (dataAccess.getGame(ReqID).blackUsername() == null) {
+            } else if (dataAccess.getGame(reqID).blackUsername() == null) {
                 parsedPlayerColor = ChessGame.TeamColor.BLACK;
             } else {
                 throw new DataAccessException("Error: Already taken", 403);
             }
-                dataAccess.updateGame(ReqID, parsedPlayerColor, retrievedToken.username());
-            return dataAccess.getGame(ReqID);
+                dataAccess.updateGame(reqID, parsedPlayerColor, retrievedToken.username());
+            return dataAccess.getGame(reqID);
         }
     }
 

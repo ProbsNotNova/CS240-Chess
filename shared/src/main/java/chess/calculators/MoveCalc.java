@@ -13,9 +13,7 @@ public interface MoveCalc {
         } else if (board.getPiece(posCheck).getTeamColor() != ally) {
             validMoves.add(new ChessMove(myPosition, posCheck, null) );
             return false;
-        } else if (board.getPiece(posCheck).getTeamColor() == ally) {
-            return false;
-        }
+        } else return board.getPiece(posCheck).getTeamColor() != ally;
         return true;
     }
     default Collection<ChessMove> kniKiValMoves(int[][] directions, ChessPosition myPosition, ChessBoard board) {
