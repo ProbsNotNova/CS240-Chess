@@ -1,25 +1,14 @@
 package server;
 import com.google.gson.Gson;
-//import dataaccess.DataAccessException;
-//import dataaccess.MemoryDataAccess;
-//import model.*;
+import model.*;
 //import server.websocket.WebSocketHandler;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
-import org.jetbrains.annotations.NotNull;
 import service.UserService;
-
-
-//    import com.google.gson.Gson;
-//import io.javalin.Javalin;
-//
-//import java.util.ArrayList;
-//import java.util.Map;
-
-
 import io.javalin.*;
 import io.javalin.http.Context;
-import model.UserData;
+
+import java.util.Map;
 
 public class Server {
     private final UserService service;
@@ -28,21 +17,21 @@ public class Server {
 
     private void exceptionHandler(DataAccessException ex, Context ctx) {
         ctx.status(ex.getStatusCode());
-        ctx.result(new Gson().toJson(ex.getMessage()));
+        ctx.result(new Gson().toJson(Map.of("message",ex.getMessage())));
     }
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
         this.service = new UserService(new MemoryDataAccess());
         // Register your endpoints and exception handlers here.
-        javalin.post("/user", context -> RegisterHandler(context));
+        javalin.post("/user", this::RegisterHandler);
         // ADD SAME FOR EACH OTHER ENDPOINT FROM DIAGRAM
-        javalin.post("/session", context -> LoginHandler(context));
-//        javalin.delete("/session", context -> LogoutHandler(context));
+        javalin.post("/session", this::LoginHandler);
+        javalin.delete("/session", this::LogoutHandler);
 //        javalin.get("/game", context -> ListGamesHandler(context));
 //        javalin.post("/game", context -> CreateGameHandler(context));
 //        javalin.put("/game", context -> JoinGameHandler(context));
-        javalin.delete("/db", context -> ClearDataBaseHandler(context));
+        javalin.delete("/db", this::ClearDataBaseHandler);
     }
 
     // Register Endpoint handler
@@ -64,14 +53,14 @@ public class Server {
         }
     }
 
-//    public void LogoutHandler( Context context) {
-//        var userInput = new Gson().fromJson(context.body(), UserData.class);
-//        try {
-//            context.result(new Gson().toJson(service.logout(userInput)));
-//        } catch (DataAccessException e) {
-//            exceptionHandler(e, context); // some kind of syntax error for JSON comes up
-//        }
-//    }
+    public void LogoutHandler( Context context) {
+        var userInput = new Gson().fromJson(context.header("authorization"), String.class);
+        try {
+            service.logout(userInput);
+        } catch (DataAccessException e) {
+            exceptionHandler(e, context); // some kind of syntax error for JSON comes up
+        }
+    }
 //
 //    public void ListGamesHandler( Context context) {
 //        var userInput = new Gson().fromJson(context.body(), UserData.class);

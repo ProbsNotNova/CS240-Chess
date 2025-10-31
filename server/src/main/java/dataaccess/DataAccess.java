@@ -5,14 +5,18 @@ import model.*;
 
 public interface DataAccess {
 
+    // Get Methods
     UserData getUser(String username) throws DataAccessException;
+    AuthData getAuth(String authToken) throws DataAccessException;
+
+    // Create Methods
     void createUser(UserData registerRequest) throws DataAccessException;
     void createAuth(AuthData newAuthToken) throws DataAccessException;
 
+    void deleteAuth(String authToken) throws DataAccessException;
+
     // Clear Methods
-    void clearUserData() throws DataAccessException;
-    void clearAuthData() throws DataAccessException;
-    void clearGameData() throws DataAccessException;
+    void clearAllData() throws DataAccessException;
 
 
 //    GameData addData(GameData game) throws DataAccessException;

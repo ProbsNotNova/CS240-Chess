@@ -11,12 +11,22 @@ public class MemoryDataAccess implements DataAccess {
     final private HashMap<String, AuthData> authTokens = new HashMap<>();
     final private HashMap<String, UserData> users = new HashMap<>();
 
+    // Get Methods
     public UserData getUser(String username) {
         if (users.containsKey(username)) {
             return users.get(username);
         }
         return null;
     }
+    public AuthData getAuth(String authToken) {
+        if (authTokens.containsKey(authToken)) {
+            return authTokens.get(authToken);
+        }
+        return null;
+    }
+
+
+    // Create Methods
     public void createUser(UserData registerRequest) {
         users.put(registerRequest.username(), registerRequest);
     }
@@ -24,50 +34,16 @@ public class MemoryDataAccess implements DataAccess {
         authTokens.put(newAuthToken.username(), newAuthToken);
     }
 
-
-
-    // DB Clear Methods
-    public void clearUserData() {
-        users.clear();
+    // Delete Methods
+    public void deleteAuth(String authToken) {
+        authTokens.remove(authToken);
     }
-    public void clearAuthData() {
-        authTokens.clear();
-    }
-    public void clearGameData() {
-        games.clear();
-    }
-    //
-//    public GameData createGame(ChessGame game) {
-//        game = new Pet(nextId++, pet.name(), pet.type());
-//
-//        games.put(game.id(), game);
-//        return game;
-//    }
-//
-//    public DataAccess listPets() {
-//        return new DataAccess(pets.values());
-//    }
-//
-//
-//    public DataAccess getGame(int id) {
-//        return games.get(id);
-//    }
-//    public AuthData getAuthToken(int id) {
-//        return authTokens.get(id);
-//    }
-//    public UserData getUser(int id) {
-//        return users.get(id);
-//    }
 
-//    public void deletePet(Integer id) {
-//        pets.remove(id);
-//    }
-
-    public void deleteAllData() {
+    // Clear Method
+    public void clearAllData() {
         games.clear();
         authTokens.clear();
         users.clear();
-
     }
 }
 

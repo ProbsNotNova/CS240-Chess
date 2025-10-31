@@ -5,7 +5,7 @@ package dataaccess;
  * Indicates there was an error connecting to the database
  */
 public class DataAccessException extends Exception{
-    private int statusCode;
+    private final int statusCode;
 
 
     public DataAccessException(String message, int statusCode) {

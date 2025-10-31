@@ -2,6 +2,9 @@ package service;
 
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import model.AuthData;
 import model.UserData;
 
@@ -11,10 +14,11 @@ import java.util.UUID;
 public class UserService {
 
     private final DataAccess dataAccess;
+    public boolean loggedOut;
 
     public UserService(DataAccess dataAccess) {
         this.dataAccess = dataAccess;
-
+        this.loggedOut = true;
     }
 
     // generate new Auth Token
@@ -36,7 +40,7 @@ public class UserService {
                     dataAccess.createAuth(authToken);
                     return authToken;
                 } catch (DataAccessException e) {
-                    throw new DataAccessException(e.getMessage(), 500);
+                    throw new DataAccessException(e.getMessage(), e.getStatusCode());
                 }
             }
     }
@@ -47,30 +51,50 @@ public class UserService {
             // Bad Request Exception
             throw new DataAccessException("Error: bad request", 400);
         } else {
-            try {
+//            try {
                 UserData retrievedData = dataAccess.getUser(loginRequest.username());
-                 if (!loginRequest.password().equals(retrievedData.password())) {
+                if (retrievedData == null || !loginRequest.password().equals(retrievedData.password())) {
                     // UnauthorizedException
                     throw new DataAccessException("Error: Unauthorized", 401);
                  } else {
                      AuthData authToken = new AuthData(loginRequest.username(), generateToken());
                      dataAccess.createAuth(authToken);
+                     loggedOut = false;
                      return authToken;
                  }
-            } catch (DataAccessException e) {
-                throw new DataAccessException(e.getMessage(), 500);
-            }
+//            } catch (DataAccessException e) {
+////                throw e;
+//                throw new DataAccessException(e.getMessage(), e.getStatusCode());
+
+//            }
         }
     }
+
+    // logout
+    public void logout(String logoutRequest) throws DataAccessException {
+//        try {
+        // INVALID AUTH FAILS BUT NORMAL PASSES AND USING RETRIEVEDTOKEN STUFF SWITCHES THEM
+            AuthData retrievedToken = dataAccess.getAuth(logoutRequest);
+            if (logoutRequest == null || loggedOut) {
+            // UnauthorizedException
+                throw new DataAccessException("Error: Unauthorized", 401);
+            } else {
+                dataAccess.deleteAuth(logoutRequest); //.authToken()
+                loggedOut = true;
+            }
+//        } catch (DataAccessException e) {
+//            throw new DataAccessException(e.getMessage(), e.getStatusCode());
+//        }
+    }
+
+
 
     // Clear
     public void clearApp() throws DataAccessException {
         try {
-        dataAccess.clearUserData();
-        dataAccess.clearAuthData();
-        dataAccess.clearGameData();
+            dataAccess.clearAllData();
         } catch (DataAccessException e) {
-            throw new DataAccessException(e.getMessage(), 500);
+            throw new DataAccessException(e.getMessage(), e.getStatusCode());
         }
     }
 
