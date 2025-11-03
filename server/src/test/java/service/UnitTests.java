@@ -1,4 +1,4 @@
-package passoff.server;
+package service;
 
 import chess.ChessGame;
 import dataaccess.DataAccess;
@@ -8,11 +8,7 @@ import model.AuthData;
 import model.CreateGameRequest;
 import model.GameData;
 import model.UserData;
-import org.eclipse.jetty.server.Authentication;
 import org.junit.jupiter.api.*;
-import passoff.model.*;
-import server.Server;
-import service.UserService;
 
 import java.net.HttpURLConnection;
 import java.util.*;
