@@ -279,46 +279,7 @@ public class UnitTests {
     @DisplayName("List Multiple Games")
     public void listingGames() {
         Assertions.assertDoesNotThrow(()-> {
-            //register a few users to create games
-            UserData userA = new UserData("a", "A", "a.A");
-            UserData userB = new UserData("b", "B", "b.B");
-            UserData userC = new UserData("c", "C", "c.C");
-
-            AuthData authA = userServiceFacade.register(userA);
-            AuthData authB = userServiceFacade.register(userB);
-            AuthData authC = userServiceFacade.register(userC);
-
-            //1 as black from A
-            String game1Name = "I'm numbah one!";
-            int game1 = userServiceFacade.createGame(authA.authToken(), game1Name);
-            userServiceFacade.joinGame(authA.authToken(), "WHITE", game1);
-
-            //1 as white from B
-            String game2Name = "Lonely";
-            int game2 = userServiceFacade.createGame(authB.authToken(), game2Name);
-            userServiceFacade.joinGame(authB.authToken(), "WHITE", game2);
-            //1 of each from C
-            String game3Name = "GG";
-            int game3 = userServiceFacade.createGame(authC.authToken(), game3Name);
-            userServiceFacade.joinGame(authC.authToken(), "BLACK", game3);
-
-            GameData G1 = new GameData(game1, authA.username(), null, "I'm numbah one!", new ChessGame());
-            GameData G2 = new GameData(game2, authB.username(), null, "Lonely", new ChessGame());
-            GameData G3 = new GameData(game3, null, authC.username(), "GG", new ChessGame());
-
-            //list games
-            Collection<GameData> expectedList = new ArrayList<>();
-            expectedList.add(G1);
-            expectedList.add(G2);
-            expectedList.add(G3);
-
-            Collection<GameData> listResult = userServiceFacade.listGames(existingAuth);
-//            assertHttpOk(listResult);
-            Assertions.assertEquals(3, listResult.size());
-
-            Assertions.assertNotNull(listResult, "List result did not contain a list of games");
-            //check
-            Assertions.assertArrayEquals(expectedList.toArray(), listResult.toArray(), "Returned Games list was incorrect");
+            listGamesGeneric(existingAuth);
         });
     }
 
@@ -328,45 +289,7 @@ public class UnitTests {
 @DisplayName("List Games bad request")
 public void listingGamesBad() {
     try {
-        //register a few users to create games
-        UserData userA = new UserData("a", "A", "a.A");
-        UserData userB = new UserData("b", "B", "b.B");
-        UserData userC = new UserData("c", "C", "c.C");
-
-        AuthData authA = userServiceFacade.register(userA);
-        AuthData authB = userServiceFacade.register(userB);
-        AuthData authC = userServiceFacade.register(userC);
-
-        //1 as black from A
-        String game1Name = "I'm numbah one!";
-        int game1 = userServiceFacade.createGame(authA.authToken(), game1Name);
-        userServiceFacade.joinGame(authA.authToken(), "WHITE", game1);
-
-        //1 as white from B
-        String game2Name = "Lonely";
-        int game2 = userServiceFacade.createGame(authB.authToken(), game2Name);
-        userServiceFacade.joinGame(authB.authToken(), "WHITE", game2);
-        //1 of each from C
-        String game3Name = "GG";
-        int game3 = userServiceFacade.createGame(authC.authToken(), game3Name);
-        userServiceFacade.joinGame(authC.authToken(), "BLACK", game3);
-
-        GameData G1 = new GameData(game1, authA.username(), null, "I'm numbah one!", new ChessGame());
-        GameData G2 = new GameData(game2, authB.username(), null, "Lonely", new ChessGame());
-        GameData G3 = new GameData(game3, null, authC.username(), "GG", new ChessGame());
-
-        //list games
-        Collection<GameData> expectedList = new ArrayList<>();
-        expectedList.add(G1);
-        expectedList.add(G2);
-        expectedList.add(G3);
-
-        Collection<GameData> listResult = userServiceFacade.listGames(existingAuth + "BADD STUF");
-        Assertions.assertEquals(3, listResult.size());
-
-        Assertions.assertNotNull(listResult, "List result did not contain a list of games");
-        //check
-        Assertions.assertArrayEquals(expectedList.toArray(), listResult.toArray(), "Returned Games list was incorrect");
+        listGamesGeneric(existingAuth + "BAD STUFF");
     } catch (DataAccessException e) {
         Assertions.assertEquals(401, e.getStatusCode());
     }
@@ -425,6 +348,47 @@ public void clearMultipleTimes() {
 
     private void assertOk(int result) {
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, result);
+    }
+
+    private void listGamesGeneric (String input) throws DataAccessException {
+        //register a few users to create games
+        UserData userA = new UserData("a", "A", "a.A");
+        UserData userB = new UserData("b", "B", "b.B");
+        UserData userC = new UserData("c", "C", "c.C");
+
+        AuthData authA = userServiceFacade.register(userA);
+        AuthData authB = userServiceFacade.register(userB);
+        AuthData authC = userServiceFacade.register(userC);
+
+        //1 as black from A
+        String game1Name = "I'm numbah one!";
+        int game1 = userServiceFacade.createGame(authA.authToken(), game1Name);
+        userServiceFacade.joinGame(authA.authToken(), "WHITE", game1);
+
+        //1 as white from B
+        String game2Name = "Lonely";
+        int game2 = userServiceFacade.createGame(authB.authToken(), game2Name);
+        userServiceFacade.joinGame(authB.authToken(), "WHITE", game2);
+        //1 of each from C
+        String game3Name = "GG";
+        int game3 = userServiceFacade.createGame(authC.authToken(), game3Name);
+        userServiceFacade.joinGame(authC.authToken(), "BLACK", game3);
+
+        GameData g1 = new GameData(game1, authA.username(), null, "I'm numbah one!", new ChessGame());
+        GameData g2 = new GameData(game2, authB.username(), null, "Lonely", new ChessGame());
+        GameData g3 = new GameData(game3, null, authC.username(), "GG", new ChessGame());
+
+        //list games
+        Collection<GameData> expectedList = new ArrayList<>();
+        expectedList.add(g1);
+        expectedList.add(g2);
+        expectedList.add(g3);
+
+        Collection<GameData> listResult = userServiceFacade.listGames(input);
+        Assertions.assertEquals(3, listResult.size());
+        Assertions.assertNotNull(listResult, "List result did not contain a list of games");
+        //check
+        Assertions.assertArrayEquals(expectedList.toArray(), listResult.toArray(), "Returned Games list was incorrect");
     }
 
     private void assertAuthFieldsMissing(AuthData result) {
