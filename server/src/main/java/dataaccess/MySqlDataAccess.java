@@ -82,7 +82,7 @@ public class MySqlDataAccess implements DataAccess {
             throw new DataAccessException("failed to insert data", ex, ex.getErrorCode());
         }
     }
-/// MODIFY THIS INTO CHESS ONE AND PULL FROM INSERTDATA CURRENT CODE
+/// MODIFY THIS INTO CHESS ONE AND PULL FROM INSERT DATA CURRENT CODE
     private int executeUpdate(String statement, Object... params) throws ResponseException {
         try (Connection conn = DatabaseManager.getConnection()) {
             try (PreparedStatement ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
