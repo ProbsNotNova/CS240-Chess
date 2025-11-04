@@ -3,7 +3,6 @@ package dataaccess;
 import java.sql.*;
 import java.util.Properties;
 
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
 public class DatabaseManager {
     private static String databaseName;
@@ -33,49 +32,7 @@ public class DatabaseManager {
         }
     }
 
-    void configureDatabase() throws DataAccessException {
-        try (var conn = getConnection()) {
-            var createDbStatement = conn.prepareStatement("CREATE DATABASE IF NOT EXISTS chess");
-            createDbStatement.executeUpdate();
 
-            conn.setCatalog("chess");
-
-            var createUserTable = """
-            CREATE TABLE  IF NOT EXISTS user (
-                id INT NOT NULL AUTO_INCREMENT,
-                name VARCHAR(255) NOT NULL,
-                type VARCHAR(255) NOT NULL,
-                PRIMARY KEY (id)
-            )""";
-            var createAuthTable = """
-            CREATE TABLE  IF NOT EXISTS auth (
-                id INT NOT NULL AUTO_INCREMENT,
-                name VARCHAR(255) NOT NULL,
-                type VARCHAR(255) NOT NULL,
-                PRIMARY KEY (id)
-            )""";
-            var createGameTable = """
-            CREATE TABLE  IF NOT EXISTS game (
-                id INT NOT NULL AUTO_INCREMENT,
-                name VARCHAR(255) NOT NULL,
-                type VARCHAR(255) NOT NULL,
-                PRIMARY KEY (id)
-            )""";
-
-
-            try (var createTableStatement = conn.prepareStatement(createUserTable)) {
-                createTableStatement.executeUpdate();
-            }
-            try (var createTableStatement = conn.prepareStatement(createAuthTable)) {
-                createTableStatement.executeUpdate();
-            }
-            try (var createTableStatement = conn.prepareStatement(createGameTable)) {
-                createTableStatement.executeUpdate();
-            }
-        } catch (SQLException ex) {
-            throw new DataAccessException("failed to configure database", ex, ex.getErrorCode());
-        }
-    }
 
 
 
@@ -101,6 +58,8 @@ public class DatabaseManager {
             throw new DataAccessException("failed to get connection", ex, ex.getErrorCode());
         }
     }
+
+
 
     private static void loadPropertiesFromResources() {
         try (var propStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("db.properties")) {
