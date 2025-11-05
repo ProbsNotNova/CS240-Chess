@@ -51,8 +51,8 @@ public class MemoryDataAccess implements DataAccess {
     public void createUser(UserData registerRequest) {
         users.put(registerRequest.username(), registerRequest);
     }
-    public void createAuth(AuthData newAuthToken) {
-        authTokens.put(newAuthToken.authToken(), newAuthToken);
+    public void createAuth(AuthData newAuth) {
+        authTokens.put(newAuth.authToken(), newAuth);
     }
     public int createGame(String gameName) {
         GameData newGame = new GameData(assignedGameID, null, null, gameName, new ChessGame());

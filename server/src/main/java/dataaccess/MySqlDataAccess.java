@@ -20,73 +20,14 @@ import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static java.sql.Types.NULL;
 
 public class MySqlDataAccess implements DataAccess {
-    private int assignedGameID = 1;
+//    private int assignedGameID = 1;
 
     public MySqlDataAccess() throws DataAccessException {
         configureDatabase();
     }
 
-    int insertData(Object type, ArrayList<String> vals) throws DataAccessException {
-        try (var conn = DatabaseManager.getConnection()) {
-            if (type.equals(UserData.class)) {
-                try (var preparedStatement = conn.prepareStatement("INSERT INTO  (username, password, email) VALUES(?, ?, ?)", RETURN_GENERATED_KEYS)) {
-                    preparedStatement.setString(1, vals.get(0));
-                    preparedStatement.setString(2, vals.get(1));
-                    preparedStatement.setString(3, vals.get(2));
-
-                    preparedStatement.executeUpdate();
-
-                    //                var resultSet = preparedStatement.getGeneratedKeys();
-                    //                var ID = 0;
-                    //                if (resultSet.next()) {
-                    //                    ID = resultSet.getInt(1);
-                    //                }
-
-                    return getUser();
-                }
-            } else if (type.equals(AuthData.class)) {
-                try (var preparedStatement = conn.prepareStatement("INSERT INTO  (username, authToken) VALUES(?, ?)", RETURN_GENERATED_KEYS)) {
-                    preparedStatement.setString(1, vals.get(0));
-                    preparedStatement.setString(2, vals.get(1)); // authToken
-
-                    preparedStatement.executeUpdate();
-
-                    var resultSet = preparedStatement.getGeneratedKeys();
-                    var ID = 0;
-                    if (resultSet.next()) {
-                        ID = resultSet.getInt(2);
-                    }
-
-                    return ID;
-                }
-            } else if (type.equals(GameData.class)) {
-                try (var preparedStatement = conn.prepareStatement("INSERT INTO  (gameID, whiteUsername, blackUsername, gameName, game) VALUES(?, ?, ?, ?, ?)", RETURN_GENERATED_KEYS)) {
-                    preparedStatement.setString(1, vals.get(0));
-                    preparedStatement.setString(2, vals.get(1));
-                    preparedStatement.setString(3, vals.get(2));
-                    preparedStatement.setString(4, vals.get(3));
-                    preparedStatement.setString(5, vals.get(4));
-
-                    preparedStatement.executeUpdate();
-
-                    var resultSet = preparedStatement.getGeneratedKeys();
-                    var ID = 0;
-                    if (resultSet.next()) {
-                        ID = resultSet.getInt(1);
-                    }
-
-                    return ID;
-                }
-            } else {
-                throw new DataAccessException("Error: Invalid type, Bad Request", 400);
-            }
-        } catch (SQLException|DataAccessException ex) {
-            throw new DataAccessException("failed to insert data", ex, e);
-        }
-    }
 /// MODIFY THIS INTO CHESS ONE AND PULL FROM INSERT DATA CURRENT CODE
-    private int executeUpdate(String statement, Object... params) throws DataAccessException {
-        try (Connection conn = DatabaseManager.getConnection()) {
+    private int executeUpdate(Connection conn, String statement, Object... params) throws DataAccessException {
             try (PreparedStatement ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
                 for (int i = 0; i < params.length; i++) {
                     Object param = params[i];
@@ -103,28 +44,42 @@ public class MySqlDataAccess implements DataAccess {
                 }
 
                 return 0;
-            }
-        } catch (SQLException e) {
+            } catch (SQLException e) {
             throw new DataAccessException(String.format("unable to update database: %s, %s", statement, e.getMessage()),e, e.getErrorCode());
         }
+//            return 0;
     }
 
     void updateData(Connection conn, int petID, String name) throws DataAccessException {
         try (var preparedStatement = conn.prepareStatement("UPDATE pet SET name=? WHERE id=?")) {
-            preparedStatement.setString(1, name);
-            preparedStatement.setInt(2, petID);
+//            preparedStatement.setString(1, name);
+//            preparedStatement.setInt(2, petID);
 
-            preparedStatement.executeUpdate();
+            executeUpdate();
         } catch (SQLException ex) {
             throw new DataAccessException("failed to update data", ex, ex.getErrorCode());
 
         }
     }
 
-    void deleteData(Connection conn, int petID) throws DataAccessException {
-        try (var preparedStatement = conn.prepareStatement("DELETE FROM pet WHERE id=?")) {
-            preparedStatement.setInt(1, petID);
-            preparedStatement.executeUpdate();
+    void deleteData(Object data, boolean clear) throws DataAccessException {
+        try (var conn = DatabaseManager.getConnection()) {
+            /*if (data.equals(UserData.class)) {
+//                String prpdStatement = ;
+//            preparedStatement.setInt(1, petID);*/
+            executeUpdate(conn, "DROP TABLE user", data);
+            /*} else */
+            if (data.equals(AuthData.class)) {
+                if (!clear) {
+                    executeUpdate(conn, "DELETE FROM auth WHERE authToken=?", data);
+                } else {
+                    executeUpdate(conn, "TRUNCATE TABLE auth", data);
+                }
+            }/* else if (data.equals(GameData.class)) {*/
+//            String prpdStatement = ;
+//            preparedStatement.setInt(1, petID);
+            executeUpdate(conn, "DROP TABLE game", data);
+            /*}*/
         } catch (SQLException ex) {
             throw new DataAccessException("failed to delete data", ex, ex.getErrorCode());
 
@@ -159,44 +114,61 @@ public class MySqlDataAccess implements DataAccess {
 
     @Override
     public void createUser(UserData registerRequest) throws DataAccessException {
-        ArrayList<String> vals = new ArrayList<>();
-        vals.add(registerRequest.username());
-        vals.add(registerRequest.password());
-        vals.add(registerRequest.email());
-        insertData(DatabaseManager.getConnection(), registerRequest, vals);
+        try (var conn = DatabaseManager.getConnection()) {
+            executeUpdate(conn, "INSERT INTO  (username, password, email) VALUES(?, ?, ?)", registerRequest);
+        } catch (SQLException|DataAccessException ex) {
+        throw new DataAccessException("failed to insert data", ex);
+        }
+//        ArrayList<String> vals = new ArrayList<>();
+//        vals.add(registerRequest.username());
+//        vals.add(registerRequest.password());
+//        vals.add(registerRequest.email());
+
     }
 
     @Override
-    public void createAuth(AuthData newAuthToken) throws DataAccessException {
-        ArrayList<String> vals = new ArrayList<>();
-        vals.add(newAuthToken.username());
-        vals.add(newAuthToken.authToken());
-        insertData(DatabaseManager.getConnection(), newAuthToken, vals);
+    public void createAuth(AuthData newAuth) throws DataAccessException {
+        try (var conn = DatabaseManager.getConnection()) {
+            executeUpdate(conn, "INSERT INTO  (username, authToken) VALUES(?, ?)", );
+        } catch (SQLException|DataAccessException ex) {
+            throw new DataAccessException("failed to insert data", ex);
+        }
+
+
+//        ArrayList<String> vals = new ArrayList<>();
+//        vals.add(newAuthToken.username());
+//        vals.add(newAuthToken.authToken());
     }
 
     @Override
     public int createGame(String gameName) throws DataAccessException {
-        GameData newGame = new GameData(assignedGameID, null, null, gameName, new ChessGame());
-        ArrayList<String> vals = new ArrayList<>();
-        vals.add(String.valueOf(newGame.gameID()));
-        vals.add(newGame.whiteUsername());
-        vals.add(newGame.blackUsername());
-        vals.add(newGame.gameName());
-        vals.add(new Gson().toJson(newGame.game()));
-        insertData(newGame, vals);
-        assignedGameID++;
+        try (var conn = DatabaseManager.getConnection()) {
+            executeUpdate(conn, "INSERT INTO  (gameID, whiteUsername, blackUsername, gameName, game) VALUES(?, ?, ?, ?, ?)", data);
+        } catch (SQLException|DataAccessException ex) {
+            throw new DataAccessException("failed to insert data", ex);
+        }
+//        GameData newGame = new GameData(assignedGameID, null, null, gameName, new ChessGame());
+//        ArrayList<Object> vals = new ArrayList<>();
+//        vals.add(String.valueOf(newGame.gameID()));
+//        vals.add(newGame.whiteUsername());
+//        vals.add(newGame.blackUsername());
+//        vals.add(newGame.gameName());
+//        vals.add(new Gson().toJson(newGame.game()));
+//        assignedGameID++;
         return 0;
     }
 
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
-
+        // DELETE specific authtoken
+        AuthData auth = getAuth(authToken);
+        deleteData(auth, false);
     }
 
     @Override
     public void clearAllData() throws DataAccessException {
-
-        assignedGameID = 1;
+            // TRUNCATE ALL TABLES
+//        assignedGameID = 1;
     }
 
 
