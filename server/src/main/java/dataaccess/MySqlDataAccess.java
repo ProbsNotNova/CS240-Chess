@@ -9,6 +9,7 @@ import model.UserData;
 import java.lang.reflect.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +17,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
+import static java.sql.Types.NULL;
 
 public class MySqlDataAccess implements DataAccess {
     private int assignedGameID = 1;
@@ -79,18 +81,18 @@ public class MySqlDataAccess implements DataAccess {
                 throw new DataAccessException("Error: Invalid type, Bad Request", 400);
             }
         } catch (SQLException|DataAccessException ex) {
-            throw new DataAccessException("failed to insert data", ex, ex.getErrorCode());
+            throw new DataAccessException("failed to insert data", ex, e);
         }
     }
 /// MODIFY THIS INTO CHESS ONE AND PULL FROM INSERT DATA CURRENT CODE
-    private int executeUpdate(String statement, Object... params) throws ResponseException {
+    private int executeUpdate(String statement, Object... params) throws DataAccessException {
         try (Connection conn = DatabaseManager.getConnection()) {
             try (PreparedStatement ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
                 for (int i = 0; i < params.length; i++) {
                     Object param = params[i];
                     if (param instanceof String p) ps.setString(i + 1, p);
                     else if (param instanceof Integer p) ps.setInt(i + 1, p);
-                    else if (param instanceof PetType p) ps.setString(i + 1, p.toString());
+                    else if (param instanceof ChessGame p) ps.setString(i + 1, new Gson().toJson(p));
                     else if (param == null) ps.setNull(i + 1, NULL);
                 }
                 ps.executeUpdate();
@@ -103,7 +105,7 @@ public class MySqlDataAccess implements DataAccess {
                 return 0;
             }
         } catch (SQLException e) {
-            throw new ResponseException(ResponseException.Code.ServerError, String.format("unable to update database: %s, %s", statement, e.getMessage()));
+            throw new DataAccessException(String.format("unable to update database: %s, %s", statement, e.getMessage()),e, e.getErrorCode());
         }
     }
 
@@ -181,7 +183,7 @@ public class MySqlDataAccess implements DataAccess {
         vals.add(newGame.blackUsername());
         vals.add(newGame.gameName());
         vals.add(new Gson().toJson(newGame.game()));
-        insertData(DatabaseManager.getConnection(), newGame, vals);
+        insertData(newGame, vals);
         assignedGameID++;
         return 0;
     }
