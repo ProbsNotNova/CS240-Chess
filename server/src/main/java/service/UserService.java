@@ -3,9 +3,11 @@ package service;
 import chess.ChessGame;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
+import dataaccess.DatabaseManager;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -31,7 +33,9 @@ public class UserService {
                 // AlreadyTakenException
                 throw new DataAccessException("Error: username already taken", 403);
             } else {
-                dataAccess.createUser(registerRequest);
+                String hashedPassword = BCrypt.hashpw(registerRequest.password(), BCrypt.gensalt());
+                // write the hashed password in database along with the user's other information
+                dataAccess.createUser(new UserData(registerRequest.username(), hashedPassword, registerRequest.email()));
                 AuthData authToken = new AuthData(registerRequest.username(), generateToken());
                 dataAccess.createAuth(authToken);
                 return authToken;
@@ -45,13 +49,18 @@ public class UserService {
             throw new DataAccessException("Error: bad request", 400);
         } else {
                 UserData retrievedData = dataAccess.getUser(loginRequest.username());
-                if (retrievedData == null || !loginRequest.password().equals(retrievedData.password())) {
+                if (retrievedData == null || !BCrypt.checkpw(loginRequest.password(), retrievedData.password())) {
+//                     || !loginRequest.password().equals(retrievedData.password()
                     // UnauthorizedException
                     throw new DataAccessException("Error: Unauthorized", 401);
                 } else {
+//                    var hashedPassword = dataAccess.getUser(loginRequest.username()).password();
+
+
                     AuthData authToken = new AuthData(loginRequest.username(), generateToken());
                     dataAccess.createAuth(authToken);
                     return authToken;
+
                 }
         }
     }
@@ -122,5 +131,7 @@ public class UserService {
             throw new DataAccessException(e.getMessage(), e.getStatusCode());
         }
     }
+
+
 
 }

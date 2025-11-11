@@ -1,5 +1,7 @@
 package server;
 import com.google.gson.Gson;
+import dataaccess.DatabaseManager;
+import dataaccess.SqlDataAccess;
 import model.*;
 //import server.websocket.WebSocketHandler;
 import dataaccess.DataAccessException;
@@ -8,10 +10,11 @@ import service.UserService;
 import io.javalin.*;
 import io.javalin.http.Context;
 
+import java.sql.SQLException;
 import java.util.Map;
 
 public class Server {
-    private final UserService service;
+    private UserService service;
 
     private final Javalin javalin;
 
@@ -23,7 +26,13 @@ public class Server {
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
-        this.service = new UserService(new MemoryDataAccess());
+
+        try {
+            DatabaseManager.configureDatabase();
+            this.service = new UserService(new SqlDataAccess());
+        } catch (SQLException e) {
+            this.service = new UserService(new MemoryDataAccess());
+        }
 
         // Server Endpoints
         javalin.post("/user", this::registerHandler);

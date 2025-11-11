@@ -1,5 +1,7 @@
 package dataaccess;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 import java.sql.*;
 import java.util.Properties;
 
@@ -18,21 +20,40 @@ public class DatabaseManager {
 
 
     }
+//     * Load the database information for the db.properties file.
+//     */
+//    static {
+//        try {
+//            try (InputStream in = DatabaseManager.class.getClassLoader().getResourceAsStream("db.properties")) {
+//                Properties props = new Properties();
+//                props.load(in);
+//                databaseName = props.getProperty("db.name");
+//                user = props.getProperty("db.user");
+//                password = props.getProperty("db.password");
+//
+//                String host = props.getProperty("db.host");
+//                var port = Integer.parseInt(props.getProperty("db.port"));
+//                connectionUrl = String.format("jdbc:mysql://%s:%d", host, port);
+//
+//            }
+//        } catch (Exception ex) {
+//            throw new RuntimeException("unable to process db.properties. " + ex.getMessage());
+//        }
+//    }
 
     /**
      * Creates the database if it does not already exist.
      */
-    static public void createDatabase() throws DataAccessException {
+    static public void createDatabase() throws SQLException {
         var statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
         try (var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
              var preparedStatement = conn.prepareStatement(statement)) {
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new DataAccessException("failed to create database", ex, ex.getErrorCode());
+            throw ex;
+//            throw new DataAccessException("failed to create database", ex, ex.getErrorCode());
         }
     }
-
-
 
 
 
@@ -48,14 +69,15 @@ public class DatabaseManager {
      * }
      * </code>
      */
-    static Connection getConnection() throws DataAccessException {
+    static Connection getConnection() throws SQLException {
         try {
             //do not wrap the following line with a try-with-resources
             var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
             conn.setCatalog(databaseName);
             return conn;
         } catch (SQLException ex) {
-            throw new DataAccessException("failed to get connection", ex, ex.getErrorCode());
+            throw ex;
+//            throw new DataAccessException("failed to get connection", ex, ex.getErrorCode());
         }
     }
 
@@ -83,7 +105,71 @@ public class DatabaseManager {
         var port = Integer.parseInt(props.getProperty("db.port"));
         connectionUrl = String.format("jdbc:mysql://%s:%d", host, port);
     }
+
+
+    public static void configureDatabase() throws SQLException {
+        DatabaseManager.createDatabase();
+        try (var conn = DatabaseManager.getConnection()) {
+//            var createDbStatement = conn.prepareStatement("CREATE DATABASE IF NOT EXISTS chess");
+//            createDbStatement.executeUpdate();
+
+//            conn.setCatalog("chess");
+
+            var createUserTable = """
+            CREATE TABLE  IF NOT EXISTS user (
+                username VARCHAR(255) NOT NULL PRIMARY KEY,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL
+            )""";
+            var createAuthTable = """
+            CREATE TABLE  IF NOT EXISTS auth (
+                username VARCHAR(255) NOT NULL,
+                authToken VARCHAR(255) NOT NULL PRIMARY KEY
+            )""";
+            var createGameTable = """
+            CREATE TABLE  IF NOT EXISTS game (
+                gameID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                whiteUsername VARCHAR(255),
+                blackUsername VARCHAR(255),
+                gameName VARCHAR(255) NOT NULL,
+                gameJson TEXT NOT NULL
+            )""";
+
+            try (var createTableStatement = conn.prepareStatement(createUserTable)) {
+                createTableStatement.executeUpdate();
+            }
+            try (var createTableStatement = conn.prepareStatement(createAuthTable)) {
+                createTableStatement.executeUpdate();
+            }
+            try (var createTableStatement = conn.prepareStatement(createGameTable)) {
+                createTableStatement.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            throw ex;
+        }
+    }
+//    /// PASSWORD HASHING
+//    void storeUserPassword(String username, String clearTextPassword) {
+//        String hashedPassword = BCrypt.hashpw(clearTextPassword, BCrypt.gensalt());
+//
+//        // write the hashed password in database along with the user's other information
+//        writeHashedPasswordToDatabase(username, hashedPassword);
+//    }
+//    boolean verifyUser(String username, String providedClearTextPassword) {
+//       // read the previously hashed password from the database
+//       var hashedPassword = readHashedPasswordFromDatabase(username);
+//
+//       return BCrypt.checkpw(providedClearTextPassword, hashedPassword);
+//    }
 }
+
+
+
+
+
+
+
+
 
 /// PASSWORD HASHING
 //void storeUserPassword(String username, String clearTextPassword) {
