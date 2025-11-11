@@ -39,22 +39,7 @@ public class SqlDataAccess implements DataAccess {
             throw new DataAccessException(String.format("Error: unable to update database: %s, %s", statement, e.getMessage()),e, 500);
         }
     }
-//
-//    private int readData(ResultSet rs, Object... params) throws DataAccessException {
-//            for (int i = 0; i < params.length; i++) {
-//                Object param = rs.[i];
-//                rs.
-//                if (param instanceof String p) rs.getString(i + 1, p);
-//                else if (param instanceof Integer p) rs.getInt("gameID");
-//                else if (param instanceof ChessGame p) ps.setString(i + 1, new Gson().toJson(p));
-//                else if (param == null) ps.setNull(i + 1, NULL);
-////
-////                private GameData readData(ResultSet rs) throws SQLException {
-////
-//                }
-//            }
-//        }
-//    }
+
 
 //    @Override
     public UserData getUser(String username) throws DataAccessException {
