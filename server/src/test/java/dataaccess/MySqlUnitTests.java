@@ -193,7 +193,7 @@ public class MySqlUnitTests {
     @Test
     @Order(2)
     @DisplayName("Update Game")
-    public void UpdateGameTest() {
+    public void updateGameTest() {
         Assertions.assertDoesNotThrow(()-> {
             int createResult = dataAccess.createGame("NEW GAME");
             Assertions.assertTrue(createResult > 0, "Result returned invalid game ID");
@@ -203,7 +203,7 @@ public class MySqlUnitTests {
     @Test
     @Order(3)
     @DisplayName("Update Game Bad Request")
-    public void UpdateGameBadRequest() {
+    public void updateGameBadRequest() {
         Assertions.assertThrows(DataAccessException.class, ()-> {
             dataAccess.updateGame(5, ChessGame.TeamColor.WHITE, existingUser.username());
         });
