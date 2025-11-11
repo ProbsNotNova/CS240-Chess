@@ -39,12 +39,7 @@ public class DatabaseManager {
      * properties specified in db.properties. Connections to the database should
      * be short-lived, and you must close the connection when you are done with it.
      * The easiest way to do that is with a try-with-resource block.
-     * <br/>
-     * <code>
-     * try (var conn = DatabaseManager.getConnection()) {
-     * // execute SQL statements.
-     * }
-     * </code>
+     *
      */
     static Connection getConnection() throws SQLException {
         try {
@@ -56,8 +51,6 @@ public class DatabaseManager {
             throw ex;
         }
     }
-
-
 
     private static void loadPropertiesFromResources() {
         try (var propStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("db.properties")) {
