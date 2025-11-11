@@ -80,17 +80,6 @@ public class SqlDataAccess implements DataAccess {
         return null;
     }
 
-
-//    private GameData executeQuery(PreparedStatement ps) throws DataAccessException {
-//        try (ResultSet rs = ps.executeQuery()) {
-//            if (rs.next()) {
-//                return readData(rs);
-//            }
-//        } catch (SQLException e) {
-//            throw new DataAccessException("message", e, e.getErrorCode());
-//        }
-//        return null;
-//    }
     private GameData parseGame(ResultSet rs) throws SQLException {
         var nGameID = rs.getInt("gameID");
         var whiteUser = rs.getString("whiteUsername");
@@ -100,10 +89,8 @@ public class SqlDataAccess implements DataAccess {
         return new GameData(nGameID, whiteUser, blackUser, gameName, new Gson().fromJson(gameJson, ChessGame.class));
     }
 
-//    @Override
     public GameData getGame(int gameID) throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
-//            executeUpdate(conn, "SELECT EXISTS ( SELECT 1 FROM game WHERE gameID =?) AS value_exists", gameID);
             var statement = "SELECT gameID, whiteUsername, blackUsername, gameName, gameJson FROM game WHERE gameID=?";
             PreparedStatement ps = conn.prepareStatement(statement);
             ps.setInt(1, gameID);
@@ -113,7 +100,7 @@ public class SqlDataAccess implements DataAccess {
                 }
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("failed to get game data", ex, 500);
+            throw new DataAccessException("Error: failed to get game data", ex, 500);
         }
         return null;
     }
@@ -132,7 +119,7 @@ public class SqlDataAccess implements DataAccess {
                 return gameList;
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("failed to list game data", ex);
+            throw new DataAccessException("Error: failed to list game data", ex);
         }
     }
 
@@ -148,7 +135,7 @@ public class SqlDataAccess implements DataAccess {
                 executeUpdate(conn, "UPDATE game SET blackUsername=? WHERE gameID=?", newGame.blackUsername(), newGame.gameID());
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("failed to update game", ex);
+            throw new DataAccessException("Error: failed to update game", ex);
         }
 
     }
@@ -158,7 +145,7 @@ public class SqlDataAccess implements DataAccess {
         try (var conn = DatabaseManager.getConnection()) {
             executeUpdate(conn, "INSERT INTO user (username, password, email) VALUES(?, ?, ?)", regReq.username(), regReq.password(), regReq.email());
         } catch (SQLException ex) {
-        throw new DataAccessException("failed to insert user data", ex, 500);
+        throw new DataAccessException("Error: failed to insert user data", ex, 500);
         }
     }
 
@@ -167,7 +154,7 @@ public class SqlDataAccess implements DataAccess {
         try (var conn = DatabaseManager.getConnection()) {
             executeUpdate(conn, "INSERT INTO auth (username, authToken) VALUES(?, ?)", newAuth.username(), newAuth.authToken());
         } catch (SQLException|DataAccessException ex) {
-            throw new DataAccessException("failed to insert auth data", ex, 500);
+            throw new DataAccessException("Error: failed to insert auth data", ex, 500);
         }
 
     }
@@ -179,7 +166,7 @@ public class SqlDataAccess implements DataAccess {
             String statement = "INSERT INTO game (whiteUsername, blackUsername, gameName, gameJson) VALUES(?, ?, ?, ?)";
             return executeUpdate(conn, statement, newGame.whiteUsername(), newGame.blackUsername(), newGame.gameName(), newGame.game());
         } catch (SQLException ex) {
-            throw new DataAccessException("failed to insert game data", ex, 500);
+            throw new DataAccessException("Error: failed to insert game data", ex, 500);
         }
     }
 
@@ -188,7 +175,7 @@ public class SqlDataAccess implements DataAccess {
         try (var conn = DatabaseManager.getConnection()) {
             executeUpdate(conn, "DELETE FROM auth WHERE authToken=?", authToken);
         } catch (SQLException ex) {
-            throw new DataAccessException("failed to delete auth entry", ex, 500);
+            throw new DataAccessException("Error: failed to delete auth entry", ex, 500);
         }
     }
 
@@ -200,114 +187,7 @@ public class SqlDataAccess implements DataAccess {
             executeUpdate(conn, "TRUNCATE TABLE auth");
             executeUpdate(conn, "TRUNCATE TABLE game");
         } catch (SQLException e) {
-            throw new DataAccessException("failed to delete auth entry", e, 500);
+            throw new DataAccessException("Error: failed to delete auth entry", e, 500);
         }
     }
-
-
 }
-
-//
-//import com.google.gson.Gson;
-//import exception.ResponseException;
-//import model.*;
-//
-//import java.sql.*;
-//
-//import static java.sql.Statement.RETURN_GENERATED_KEYS;
-//import static java.sql.Types.NULL;
-//
-//
-//public class MySqlDataAccess implements DataAccess {
-//
-//    public MySqlDataAccess() throws ResponseException {
-//        configureDatabase();
-//    }
-/// /////////// IMPORTANT
-//    public Pet addPet(Pet pet) throws ResponseException {
-//        var statement = "INSERT INTO pet (name, type, json) VALUES (?, ?, ?)";
-//        String json = new Gson().toJson(pet);
-//        int id = executeUpdate(statement, pet.name(), pet.type(), json);
-//        return new Pet(id, pet.name(), pet.type());
-//    }
-//
-//    public Pet getPet(int id) throws ResponseException {
-//        try (Connection conn = DatabaseManager.getConnection()) {
-//            var statement = "SELECT id, json FROM pet WHERE id=?";
-//            try (PreparedStatement ps = conn.prepareStatement(statement)) {
-//                ps.setInt(1, id);
-//                try (ResultSet rs = ps.executeQuery()) {
-//                    if (rs.next()) {
-//                        return readPet(rs);
-//                    }
-//                }
-//            }
-//        } catch (Exception e) {
-//            throw new ResponseException(ResponseException.Code.ServerError, String.format("Unable to read data: %s", e.getMessage()));
-//        }
-//        return null;
-//    }
-//
-//    public PetList listPets() throws ResponseException {
-//        var result = new PetList();
-//        try (Connection conn = DatabaseManager.getConnection()) {
-//            var statement = "SELECT id, json FROM pet";
-//            try (PreparedStatement ps = conn.prepareStatement(statement)) {
-//                try (ResultSet rs = ps.executeQuery()) {
-//                    while (rs.next()) {
-//                        result.add(readPet(rs));
-//                    }
-//                }
-//            }
-//        } catch (Exception e) {
-//            throw new ResponseException(ResponseException.Code.ServerError, String.format("Unable to read data: %s", e.getMessage()));
-//        }
-//        return result;
-//    }
-//
-//
-//    private Pet readPet(ResultSet rs) throws SQLException {
-//        var id = rs.getInt("id");
-//        var json = rs.getString("json");
-//        Pet pet = new Gson().fromJson(json, Pet.class);
-//        return pet.setId(id);
-//    }
-/// /////// IMPORTANT TO LOOK AT
-//    private int executeUpdate(String statement, Object... params) throws ResponseException {
-//        try (Connection conn = DatabaseManager.getConnection()) {
-//            try (PreparedStatement ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
-//                for (int i = 0; i < params.length; i++) {
-//                    Object param = params[i];
-//                    if (param instanceof String p) ps.setString(i + 1, p);
-//                    else if (param instanceof Integer p) ps.setInt(i + 1, p);
-//                    else if (param instanceof PetType p) ps.setString(i + 1, p.toString());
-//                    else if (param == null) ps.setNull(i + 1, NULL);
-//                }
-//                ps.executeUpdate();
-//
-//                ResultSet rs = ps.getGeneratedKeys();
-//                if (rs.next()) {
-//                    return rs.getInt(1);
-//                }
-//
-//                return 0;
-//            }
-//        } catch (SQLException e) {
-//            throw new ResponseException(ResponseException.Code.ServerError, String.format("unable to update database: %s, %s", statement, e.getMessage()));
-//        }
-//    }
-//
-//    private final String[] createStatements = {
-//            """
-//            CREATE TABLE IF NOT EXISTS  pet (
-//              `id` int NOT NULL AUTO_INCREMENT,
-//              `name` varchar(256) NOT NULL,
-//              `type` ENUM('CAT', 'DOG', 'FISH', 'FROG', 'ROCK') DEFAULT 'CAT',
-//              `json` TEXT DEFAULT NULL,
-//              PRIMARY KEY (`id`),
-//              INDEX(type),
-//              INDEX(name)
-//            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-//            """
-//    };
-//
