@@ -4,6 +4,7 @@ import chess.ChessGame;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 //import dataaccess.exclude.MemoryDataAccess;
+import dataaccess.MemoryDataAccess;
 import dataaccess.SqlDataAccess;
 import model.AuthData;
 import model.CreateGameRequest;
@@ -32,7 +33,7 @@ public class UnitTests {
     public static void init() {
         System.out.println("Started test UserService");
 
-        dataAccess = new SqlDataAccess();
+        dataAccess = new MemoryDataAccess();
         userServiceFacade = new UserService(dataAccess);
         existingUser = new UserData ("ExistingUser", "existingUserPassword", "eu@mail.com");
         newUser = new UserData("NewUser", "newUserPassword", "nu@mail.com");

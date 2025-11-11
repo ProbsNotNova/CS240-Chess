@@ -56,7 +56,7 @@ public class SqlDataAccess implements DataAccess {
                 }
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("failed to get user data", ex, 500);
+            throw new DataAccessException("Error: failed to get user data", ex, 500);
         }
         return null;
     }
@@ -75,7 +75,7 @@ public class SqlDataAccess implements DataAccess {
                 }
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("failed to get auth data", ex, 500);
+            throw new DataAccessException("Error: failed to get auth data", ex, 500);
         }
         return null;
     }
@@ -136,6 +136,8 @@ public class SqlDataAccess implements DataAccess {
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Error: failed to update game", ex);
+        } catch (NullPointerException ex) {
+            throw new DataAccessException("Error: input null failed to update game", ex);
         }
 
     }
@@ -153,7 +155,7 @@ public class SqlDataAccess implements DataAccess {
     public void createAuth(AuthData newAuth) throws DataAccessException {
         try (var conn = DatabaseManager.getConnection()) {
             executeUpdate(conn, "INSERT INTO auth (username, authToken) VALUES(?, ?)", newAuth.username(), newAuth.authToken());
-        } catch (SQLException|DataAccessException ex) {
+        } catch (SQLException ex) {
             throw new DataAccessException("Error: failed to insert auth data", ex, 500);
         }
 
@@ -187,7 +189,7 @@ public class SqlDataAccess implements DataAccess {
             executeUpdate(conn, "TRUNCATE TABLE auth");
             executeUpdate(conn, "TRUNCATE TABLE game");
         } catch (SQLException e) {
-            throw new DataAccessException("Error: failed to delete auth entry", e, 500);
+            throw new DataAccessException("Error: failed to clear database", e, 500);
         }
     }
 }
