@@ -27,19 +27,19 @@ public class UserService {
 
     // Register Request and Result
     public AuthData register(UserData registerRequest) throws DataAccessException {
-            if ((registerRequest.username() == null) || (registerRequest.password() == null) || (registerRequest.email() == null)) {
-                throw new DataAccessException("Error: bad request", 400);
-            } else if (dataAccess.getUser(registerRequest.username()) != null) {
-                // AlreadyTakenException
-                throw new DataAccessException("Error: username already taken", 403);
-            } else {
-                String hashedPassword = BCrypt.hashpw(registerRequest.password(), BCrypt.gensalt());
-                // write the hashed password in database along with the user's other information
-                dataAccess.createUser(new UserData(registerRequest.username(), hashedPassword, registerRequest.email()));
-                AuthData authToken = new AuthData(registerRequest.username(), generateToken());
-                dataAccess.createAuth(authToken);
-                return authToken;
-            }
+        if ((registerRequest.username() == null) || (registerRequest.password() == null) || (registerRequest.email() == null)) {
+            throw new DataAccessException("Error: bad request", 400);
+        }
+        if (dataAccess.getUser(registerRequest.username()) != null) {
+            // AlreadyTakenException
+            throw new DataAccessException("Error: username already taken", 403);
+        }
+        String hashedPassword = BCrypt.hashpw(registerRequest.password(), BCrypt.gensalt());
+        // write the hashed password in database along with the user's other information
+        dataAccess.createUser(new UserData(registerRequest.username(), hashedPassword, registerRequest.email()));
+        AuthData authToken = new AuthData(registerRequest.username(), generateToken());
+        dataAccess.createAuth(authToken);
+        return authToken;
     }
 
     // Login
@@ -47,22 +47,16 @@ public class UserService {
         if ((loginRequest.username() == null) || (loginRequest.password() == null)) {
             // Bad Request Exception
             throw new DataAccessException("Error: bad request", 400);
-        } else {
-                UserData retrievedData = dataAccess.getUser(loginRequest.username());
-                if (retrievedData == null || !BCrypt.checkpw(loginRequest.password(), retrievedData.password())) {
-//                     || !loginRequest.password().equals(retrievedData.password()
-                    // UnauthorizedException
-                    throw new DataAccessException("Error: Unauthorized", 401);
-                } else {
-//                    var hashedPassword = dataAccess.getUser(loginRequest.username()).password();
-
-
-                    AuthData authToken = new AuthData(loginRequest.username(), generateToken());
-                    dataAccess.createAuth(authToken);
-                    return authToken;
-
-                }
         }
+        UserData retrievedData = dataAccess.getUser(loginRequest.username());
+        if (retrievedData == null || !BCrypt.checkpw(loginRequest.password(), retrievedData.password())) {
+            // UnauthorizedException
+            throw new DataAccessException("Error: Unauthorized", 401);
+        }
+        AuthData authToken = new AuthData(loginRequest.username(), generateToken());
+        dataAccess.createAuth(authToken);
+        return authToken;
+
     }
 
     // Logout
@@ -71,9 +65,8 @@ public class UserService {
         if (retrievedToken == null) {
             // UnauthorizedException
             throw new DataAccessException("Error: Unauthorized", 401);
-        } else {
-            dataAccess.deleteAuth(logoutRequest);
         }
+        dataAccess.deleteAuth(logoutRequest);
     }
     // List All Games
     public Collection<GameData> listGames(String listGamesRequest) throws DataAccessException {
@@ -81,9 +74,8 @@ public class UserService {
         if (retrievedToken == null) {
             // UnauthorizedException
             throw new DataAccessException("Error: Unauthorized", 401);
-        } else {
-                return dataAccess.listGames();
         }
+        return dataAccess.listGames();
     }
 
     // Create Game
@@ -95,9 +87,8 @@ public class UserService {
         if (retrievedToken == null) {
             // UnauthorizedException
             throw new DataAccessException("Error: Unauthorized", 401);
-        } else {
-                return dataAccess.createGame(createGameReq);
         }
+        return dataAccess.createGame(createGameReq);
     }
 
     // Join Game
@@ -109,18 +100,17 @@ public class UserService {
         if (retrievedToken == null) {
             // UnauthorizedException
             throw new DataAccessException("Error: Unauthorized", 401);
-        } else {
-            ChessGame.TeamColor parsedPlayerColor;
-            if (playerColor.equals("WHITE") && dataAccess.getGame(reqID).whiteUsername() == null) {
-                parsedPlayerColor = ChessGame.TeamColor.WHITE;
-            } else if (dataAccess.getGame(reqID).blackUsername() == null) {
-                parsedPlayerColor = ChessGame.TeamColor.BLACK;
-            } else {
-                throw new DataAccessException("Error: Already taken", 403);
-            }
-                dataAccess.updateGame(reqID, parsedPlayerColor, retrievedToken.username());
-            return dataAccess.getGame(reqID);
         }
+        ChessGame.TeamColor parsedPlayerColor;
+        if (playerColor.equals("WHITE") && dataAccess.getGame(reqID).whiteUsername() == null) {
+            parsedPlayerColor = ChessGame.TeamColor.WHITE;
+        } else if (dataAccess.getGame(reqID).blackUsername() == null) {
+            parsedPlayerColor = ChessGame.TeamColor.BLACK;
+        } else {
+            throw new DataAccessException("Error: Already taken", 403);
+        }
+        dataAccess.updateGame(reqID, parsedPlayerColor, retrievedToken.username());
+        return dataAccess.getGame(reqID);
     }
 
     // Clear
