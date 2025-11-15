@@ -34,7 +34,7 @@ public class ChessClient {
 //    }
     // E definition of REPL loop
     public String eval(String input) throws IOException {
-        String[] tokens = input.toLowerCase().split(" ");
+        String[] tokens = input.split(" ");
         String cmd = (tokens.length > 0) ? tokens[0] : "help";
         String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
         if (state == State.SIGNEDOUT) {
@@ -48,7 +48,7 @@ public class ChessClient {
         return switch (cmd) {
             case "joinGame" -> joinGame(params);
             case "createGame" -> createGame(params);
-            case "listGames" -> listGames();
+            case "listGames" -> listGames(params);
             case "logout" -> logout();
             default -> help();
         };
@@ -63,7 +63,7 @@ public class ChessClient {
                     """;
         }
         return """
-                - joinGame <gameName>
+                - joinGame <playerColor> <gameID>
                 - createGame <gameName>
                 - listGames
                 - logout
@@ -131,7 +131,7 @@ public class ChessClient {
             throw new IOException("Invalid Parameters, Check help()");
         }
         server.logout(sessionAuth);
-        state = State.SIGNEDIN;
+        state = State.SIGNEDOUT;
         visitorName = null;
         return "Logged out";
     }
