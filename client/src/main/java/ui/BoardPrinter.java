@@ -13,7 +13,7 @@ import static ui.EscapeSequences.*;
 
 public class BoardPrinter {
     private static ChessBoard board = new ChessBoard();
-    private static final String[] headers = { " A  B  C  D  E  F  G  H ",
+    private static final String[] HEADERS = { " A  B  C  D  E  F  G  H ",
                                               " 8 ", " 7 ", " 6 ", " 5 ",
                                               " 4 ", " 3 ", " 2 ", " 1 ",
                                               " H  G  F  E  D  C  B  A "};
@@ -22,7 +22,7 @@ public class BoardPrinter {
     private static final int BOARD_SIZE_IN_SQUARES = 9;
     private static final int SQUARE_SIZE_IN_PADDED_CHARS = 3;
 
-    public void printBoard(/*PrintStream out, */String currentPlayerColor, ChessBoard inputBoard) {
+    public void printBoard(String currentPlayerColor, ChessBoard inputBoard) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
         if (inputBoard != null) {
             board = inputBoard;
@@ -30,15 +30,15 @@ public class BoardPrinter {
         out.print(ERASE_SCREEN);
         board.resetBoard();
         if (currentPlayerColor.equals("WHITE")) {
-            drawAlphaHeader(out, headers[0]);
+            drawAlphaHeader(out, HEADERS[0]);
             out.println();
             drawWhiteSideBoard(out);
-            drawAlphaHeader(out, headers[0]);
+            drawAlphaHeader(out, HEADERS[0]);
         } else {
-            drawAlphaHeader(out, headers[9]);
+            drawAlphaHeader(out, HEADERS[9]);
             out.println();
             drawBlackSideBoard(out);
-            drawAlphaHeader(out, headers[9]);
+            drawAlphaHeader(out, HEADERS[9]);
         }
 
         out.print(SET_BG_COLOR_BLACK);
@@ -78,11 +78,11 @@ public class BoardPrinter {
     private static void drawWhiteSideBoard(PrintStream out) {
         int numHeadCnt = 1;
         for (int boardRow = 8; boardRow >= 1; boardRow--) {
-            drawNumHeader(out, headers[numHeadCnt]);
+            drawNumHeader(out, HEADERS[numHeadCnt]);
             for (int boardCol = 1; boardCol < BOARD_SIZE_IN_SQUARES; boardCol++) {
                 drawRowOfSquares(out, boardRow, boardCol);
             }
-            drawNumHeader(out, headers[numHeadCnt]);
+            drawNumHeader(out, HEADERS[numHeadCnt]);
             numHeadCnt++;
             setBlack(out);
             out.println();
@@ -92,11 +92,11 @@ public class BoardPrinter {
     private static void drawBlackSideBoard(PrintStream out) {
             int numHeadCnt = 8;
         for (int boardRow = 1; boardRow < BOARD_SIZE_IN_SQUARES; boardRow++) {
-            drawNumHeader(out, headers[numHeadCnt]);
+            drawNumHeader(out, HEADERS[numHeadCnt]);
             for (int boardCol = 8; boardCol >= 1; boardCol--) {
                 drawRowOfSquares(out, boardRow, boardCol);
             }
-            drawNumHeader(out, headers[numHeadCnt]);
+            drawNumHeader(out, HEADERS[numHeadCnt]);
             numHeadCnt--;
             setBlack(out);
             out.println();

@@ -27,7 +27,7 @@ import java.util.*;
 public class ClientUnitTests {
 
     private static ServerFacade serverFacade;
-    private static final Console console = new Console();
+    private static final Console CONSOLE = new Console();
 
     private static UserData existingUser;
     private static UserData newUser;
@@ -47,10 +47,10 @@ public class ClientUnitTests {
 
     @BeforeEach
     public void setup() throws IOException {
-        console.client.clear();
+        CONSOLE.client.clear();
         Assertions.assertDoesNotThrow(()->{
-            console.client.register(existingUser.username(), existingUser.password(), existingUser.email());
-            console.client.logout();
+            CONSOLE.client.register(existingUser.username(), existingUser.password(), existingUser.email());
+            CONSOLE.client.logout();
         });
 
     }
@@ -63,7 +63,7 @@ public class ClientUnitTests {
     @DisplayName("Normal User Login")
     public void loggingIn() {
         Assertions.assertDoesNotThrow(()->{
-            String loginResult = console.client.login(existingUser.username(), existingUser.password());
+            String loginResult = CONSOLE.client.login(existingUser.username(), existingUser.password());
             Assertions.assertEquals(String.format("Signed in as %s", existingUser.username()), loginResult,
                     "Response didn't have same string return");
         });
@@ -73,7 +73,7 @@ public class ClientUnitTests {
     @Order(3)
     @DisplayName("Login Invalid Params")
     public void loginInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->console.client.login("wee"));
+        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.login("wee"));
     }
 // GOOD REGISTER TEST
     @Test
@@ -81,7 +81,7 @@ public class ClientUnitTests {
     @DisplayName("Normal User Registration")
     public void registering() {
         Assertions.assertDoesNotThrow(()->{
-            String regResult = console.client.register(newUser.username(), newUser.password(), newUser.email());
+            String regResult = CONSOLE.client.register(newUser.username(), newUser.password(), newUser.email());
             Assertions.assertEquals("Registered Successfully", regResult,
                     "Response didn't have same string return");
 
@@ -92,7 +92,7 @@ public class ClientUnitTests {
     @Order(5)
     @DisplayName("Register Invalid Params")
     public void registerBadRequest() {
-        Assertions.assertThrows(IOException.class, ()->console.client.register(newUser.password()));
+        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.register(newUser.password()));
     }
 // GOOD LOGOUT TEST
     @Test
@@ -101,8 +101,8 @@ public class ClientUnitTests {
     public void loggingOut() {
         //log out existing user
         Assertions.assertDoesNotThrow(()-> {
-            console.client.login(existingUser.username(), existingUser.password());
-            String regResult = console.client.logout();
+            CONSOLE.client.login(existingUser.username(), existingUser.password());
+            String regResult = CONSOLE.client.logout();
             Assertions.assertEquals("Logging Out", regResult,
                     "Response didn't have same string return");
         });
@@ -112,7 +112,7 @@ public class ClientUnitTests {
     @Order(7)
     @DisplayName("Logout Invalid Params")
     public void logoutInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->console.client.logout(newUser.password()));
+        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.logout(newUser.password()));
     }
 // GOOD CREATE GAME TEST
     @Test
@@ -120,8 +120,8 @@ public class ClientUnitTests {
     @DisplayName("Valid Creation")
     public void creatingGame() {
         Assertions.assertDoesNotThrow(()->{
-            console.client.login(existingUser.username(), existingUser.password());
-            console.client.createGame("Game");
+            CONSOLE.client.login(existingUser.username(), existingUser.password());
+            CONSOLE.client.createGame("Game");
         });
     }
     // BAD CREATE GAME TEST 1
@@ -130,7 +130,7 @@ public class ClientUnitTests {
     @DisplayName("Create with Invalid Params")
     public void createGameInvalidParams() {
         //log out user so auth is invalid
-        Assertions.assertThrows(IOException.class, console.client::createGame);
+        Assertions.assertThrows(IOException.class, CONSOLE.client::createGame);
     }
 // GOOD JOIN TEST
     @Test
@@ -139,11 +139,11 @@ public class ClientUnitTests {
     public void joiningGame() {
         //create game
         Assertions.assertDoesNotThrow(()-> {
-            console.client.login(existingUser.username(), existingUser.password());
-            console.client.createGame("game");
+            CONSOLE.client.login(existingUser.username(), existingUser.password());
+            CONSOLE.client.createGame("game");
             String[] tokens = {"1", "WHITE"};
             String[] params = Arrays.copyOfRange(tokens, 0, tokens.length);
-            console.client.joinGame(params);
+            CONSOLE.client.joinGame(params);
 
         });
     }
@@ -152,7 +152,7 @@ public class ClientUnitTests {
     @Order(11)
     @DisplayName("Join Invalid Params")
     public void joinGameInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->console.client.joinGame("one"));
+        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.joinGame("one"));
     }
 // GOOD LIST GAMES TEST
     @Test
@@ -160,10 +160,10 @@ public class ClientUnitTests {
     @DisplayName("List Games")
     public void listingGames() {
         Assertions.assertDoesNotThrow(()-> {
-            console.client.login(existingUser.username(), existingUser.password());
-            console.client.createGame("uwu");
-            console.client.createGame("owo");
-            console.client.listGames();
+            CONSOLE.client.login(existingUser.username(), existingUser.password());
+            CONSOLE.client.createGame("uwu");
+            CONSOLE.client.createGame("owo");
+            CONSOLE.client.listGames();
         });
     }
 // BAD LIST GAMES TEST
@@ -171,7 +171,7 @@ public class ClientUnitTests {
     @Order(12)
     @DisplayName("List Games Invalid Params")
     public void listingGamesInvalidParams() throws DataAccessException {
-        Assertions.assertThrows(IOException.class, ()->console.client.listGames("GAME NAME", "woah cool"));
+        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.listGames("GAME NAME", "woah cool"));
     }
 
 }
