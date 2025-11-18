@@ -13,7 +13,7 @@ import java.util.*;
 public class ServerFacadeTests {
 
     private static Server server;
-    private static ServerFacade SERVERFACADE;
+    private static ServerFacade serverFacade;
 
     private static UserData existingUser;
     private static UserData newUser;
@@ -25,23 +25,23 @@ public class ServerFacadeTests {
     public static void init() throws IOException {
         server = new Server();
         var port = server.run(0);
-        SERVERFACADE = new ServerFacade(port);
+        serverFacade = new ServerFacade(port);
         System.out.println("Started test HTTP server on " + port);
         existingUser = new UserData ("ExistingUser", "existingUserPassword", "eu@mail.com");
         newUser = new UserData("NewUser", "newUserPassword", "nu@mail.com");
-        SERVERFACADE.register(existingUser.username(), existingUser.password(), existingUser.email());
+        serverFacade.register(existingUser.username(), existingUser.password(), existingUser.email());
 
     }
 
     @AfterAll
     static void stopServer() throws IOException {
-        SERVERFACADE.clear();
+        serverFacade.clear();
         server.stop();
     }
 
     @BeforeEach
     public void setup() throws IOException {
-        loginResult = SERVERFACADE.login(existingUser.username(), existingUser.password());
+        loginResult = serverFacade.login(existingUser.username(), existingUser.password());
     }
 
     // ### server-LEVEL UNIT TESTS ###
@@ -52,7 +52,7 @@ public class ServerFacadeTests {
     @DisplayName("Normal User Registration")
     public void registering() {
         Assertions.assertDoesNotThrow(()->{
-            SERVERFACADE.register(newUser.username(), newUser.password(), newUser.email());
+            serverFacade.register(newUser.username(), newUser.password(), newUser.email());
 
         });
     }
@@ -61,8 +61,8 @@ public class ServerFacadeTests {
     @Order(5)
     @DisplayName("Register Invalid Params")
     public void registerBadRequest() throws IOException {
-        SERVERFACADE.logout(loginResult);
-        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.register(newUser.password(), null, null));
+        serverFacade.logout(loginResult);
+        Assertions.assertThrows(IOException.class, ()->serverFacade.register(newUser.password(), null, null));
     }
     // GOOD LOGIN TEST
     @Test
@@ -70,7 +70,7 @@ public class ServerFacadeTests {
     @DisplayName("Normal User Login")
     public void loggingIn() {
         Assertions.assertDoesNotThrow(()->{
-            SERVERFACADE.login(existingUser.username(), existingUser.password());
+            serverFacade.login(existingUser.username(), existingUser.password());
         });
     }
     // BAD LOGIN TEST
@@ -78,7 +78,7 @@ public class ServerFacadeTests {
     @Order(3)
     @DisplayName("Login Invalid Params")
     public void loginInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.login(null, null));
+        Assertions.assertThrows(IOException.class, ()->serverFacade.login(null, null));
     }
 // GOOD LOGOUT TEST
     @Test
@@ -87,7 +87,7 @@ public class ServerFacadeTests {
     public void loggingOut() {
         //log out existing user
         Assertions.assertDoesNotThrow(()-> {
-            SERVERFACADE.logout(loginResult);
+            serverFacade.logout(loginResult);
         });
     }
 // BAD LOGOUT TEST
@@ -95,7 +95,7 @@ public class ServerFacadeTests {
     @Order(7)
     @DisplayName("Logout Invalid Params")
     public void logoutInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.logout(newUser.password()));
+        Assertions.assertThrows(IOException.class, ()->serverFacade.logout(newUser.password()));
     }
 // GOOD CREATE GAME TEST
     @Test
@@ -103,7 +103,7 @@ public class ServerFacadeTests {
     @DisplayName("Valid Creation")
     public void creatingGame() {
         Assertions.assertDoesNotThrow(()->{
-            SERVERFACADE.createGame("Game", loginResult);
+            serverFacade.createGame("Game", loginResult);
         });
     }
     // BAD CREATE GAME TEST 1
@@ -111,7 +111,7 @@ public class ServerFacadeTests {
     @Order(9)
     @DisplayName("Create with Invalid Params")
     public void createGameInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.createGame(null, loginResult));
+        Assertions.assertThrows(IOException.class, ()->serverFacade.createGame(null, loginResult));
     } // make sure to change all to actual server facade and get auth etc
 // GOOD JOIN TEST
     @Test
@@ -120,8 +120,8 @@ public class ServerFacadeTests {
     public void joiningGame() {
         //create game
         Assertions.assertDoesNotThrow(()-> {
-            int gameID = SERVERFACADE.createGame("game", loginResult);
-            SERVERFACADE.joinGame("WHITE", gameID, loginResult);
+            int gameID = serverFacade.createGame("game", loginResult);
+            serverFacade.joinGame("WHITE", gameID, loginResult);
         });
     }
 // BAD JOIN TEST
@@ -129,7 +129,7 @@ public class ServerFacadeTests {
     @Order(11)
     @DisplayName("Join Invalid Params")
     public void joinGameInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.joinGame("one", 3, loginResult));
+        Assertions.assertThrows(IOException.class, ()->serverFacade.joinGame("one", 3, loginResult));
     }
 // GOOD LIST GAMES TEST
     @Test
@@ -137,9 +137,9 @@ public class ServerFacadeTests {
     @DisplayName("List Games")
     public void listingGames() {
         Assertions.assertDoesNotThrow(()-> {
-            SERVERFACADE.createGame("uwu", loginResult);
-            SERVERFACADE.createGame("owo", loginResult);
-            SERVERFACADE.listGames(loginResult);
+            serverFacade.createGame("uwu", loginResult);
+            serverFacade.createGame("owo", loginResult);
+            serverFacade.listGames(loginResult);
         });
     }
 // BAD LIST GAMES TEST
@@ -147,7 +147,7 @@ public class ServerFacadeTests {
     @Order(12)
     @DisplayName("List Games Invalid Params")
     public void listingGamesInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.listGames("bad auth"));
+        Assertions.assertThrows(IOException.class, ()->serverFacade.listGames("bad auth"));
     }
 
 }
