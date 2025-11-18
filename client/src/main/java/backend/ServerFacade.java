@@ -10,14 +10,11 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.AbstractCollection;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
 public class ServerFacade {
 
-    private HttpRequest buildRequest (String path, String method, Object body, String authToken) throws IOException {
+    private HttpRequest buildRequest(String path, String method, Object body, String authToken) throws IOException {
         try {
             HttpRequest.Builder builder = HttpRequest.newBuilder();
             builder.uri(new URI("http://localhost:8080/" + path));
@@ -31,17 +28,17 @@ public class ServerFacade {
         }
     }
 
-    private HttpRequest.BodyPublisher bodyBuilder (Object body) {
+    private HttpRequest.BodyPublisher bodyBuilder(Object body) {
         if (body == null) {
             return HttpRequest.BodyPublishers.noBody();
         }
         return HttpRequest.BodyPublishers.ofString(new Gson().toJson(body));
     }
 
-    private <T> T sendRequest (HttpRequest request, Class<T> responseClass) throws IOException {
+    private <T> T sendRequest(HttpRequest request, Class<T> responseClass) throws IOException {
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if(response.statusCode() == 200) {
+            if (response.statusCode() == 200) {
                 if (responseClass == null) {
                     return null;
                 }
@@ -57,13 +54,14 @@ public class ServerFacade {
     public String register(String uName, String pWord, String email) throws IOException {
         HttpRequest request = buildRequest("user", "POST", new UserData(uName, pWord, email), null);
         AuthData auth = sendRequest(request, AuthData.class);
-        assert auth != null; ////////
+        assert auth != null;
         return auth.authToken();
     }
+
     public String login(String uName, String pWord) throws IOException {
         HttpRequest request = buildRequest("session", "POST", new UserData(uName, pWord, null), null);
         AuthData auth = sendRequest(request, AuthData.class);
-        assert auth != null; ////////
+        assert auth != null;
         return auth.authToken();
     }
 
@@ -75,28 +73,17 @@ public class ServerFacade {
     public int createGame(String gameName, String authToken) throws IOException {
         HttpRequest request = buildRequest("game", "POST", new CreateGameRequest(gameName), authToken);
         GameData game = sendRequest(request, GameData.class);
-        assert game != null; //////////
+        assert game != null;
         return game.gameID();
     }
     public Collection<GameData> listGames(String authToken) throws IOException {
         HttpRequest request = buildRequest("game", "GET", null, authToken);
         ListGamesResult games = sendRequest(request, ListGamesResult.class);
-        assert games != null; ////////
+        assert games != null;
         return games.games();
     }
     public void logout(String authToken) throws IOException {
         HttpRequest request = buildRequest("session", "DELETE", null, authToken);
         sendRequest(request, AuthData.class);
-//        assert auth != null; ////////
-//        return auth.authToken();
     }
-    
-//     // Server Endpoints
-//        //javalin.post("/user", this::registerHandler);
-//        //javalin.post("/session", this::loginHandler);
-//        //javalin.delete("/session", this::logoutHandler);
-//        //javalin.get("/game", this::listGamesHandler);
-//        javalin.post("/game", this::createGameHandler);
-//        javalin.put("/game", this::joinGameHandler);
-///        javalin.delete("/db", this::clearDataBaseHandler);
 }
