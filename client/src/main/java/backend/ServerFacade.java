@@ -86,4 +86,8 @@ public class ServerFacade {
         HttpRequest request = buildRequest("session", "DELETE", null, authToken);
         sendRequest(request, AuthData.class);
     }
+    public void clear() throws IOException {
+        HttpRequest request = buildRequest("db", "DELETE", null, null);
+        sendRequest(request, AuthData.class);
+    }
 }

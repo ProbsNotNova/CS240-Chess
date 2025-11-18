@@ -149,12 +149,15 @@ public class ChessClient {
         server.logout(sessionAuth);
         state = State.SIGNEDOUT;
         visitorName = null;
-        return "Logged out";
+        return "Logging Out";
     }
 
     private void assertSignedIn() throws IOException {
         if (state == State.SIGNEDOUT) {
             throw new IOException("You must login or register");
         }
+    }
+    public void clear() throws IOException {
+        server.clear();
     }
 }

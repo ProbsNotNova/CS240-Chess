@@ -4,7 +4,7 @@ import java.util.Scanner;
 import static ui.EscapeSequences.*;
 
 public class Console {
-    private final ChessClient client = new ChessClient();
+    public final ChessClient client = new ChessClient();
     private final Scanner scanner = new Scanner(System.in);
 
     private void printPrompt() {
