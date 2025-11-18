@@ -13,10 +13,15 @@ import java.util.Collection;
 
 public class ServerFacade {
 
+    public int port = 8080;
+    public ServerFacade (int port) {
+        this.port = port;
+    }
+
     private HttpRequest buildRequest(String path, String method, Object body, String authToken) throws IOException {
         try {
             HttpRequest.Builder builder = HttpRequest.newBuilder();
-            builder.uri(new URI("http://localhost:8080/" + path));
+            builder.uri(new URI("http://localhost:" + port + "/" + path));
             builder.method(method, bodyBuilder(body));
             if (authToken != null) {
                 builder.header("Authorization", authToken);

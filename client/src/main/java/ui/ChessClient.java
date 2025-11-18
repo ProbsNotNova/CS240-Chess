@@ -15,8 +15,7 @@ public class ChessClient {
     private String sessionAuth = null;
     public String currentPlayerColor = null;
 
-
-    private final ServerFacade server = new ServerFacade();
+    private final ServerFacade server = new ServerFacade(8080);
     private final BoardPrinter bdPrint = new BoardPrinter();
 
     // E definition of REPL loop

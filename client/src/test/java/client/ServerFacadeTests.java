@@ -13,7 +13,7 @@ import java.util.*;
 public class ServerFacadeTests {
 
     private static Server server;
-    private static final ServerFacade SERVERFACADE = new ServerFacade();
+    private static ServerFacade SERVERFACADE;
 
     private static UserData existingUser;
     private static UserData newUser;
@@ -25,8 +25,8 @@ public class ServerFacadeTests {
     public static void init() throws IOException {
         server = new Server();
         var port = server.run(0);
+        SERVERFACADE = new ServerFacade(port);
         System.out.println("Started test HTTP server on " + port);
-        System.out.println("Started Client Unit Tests");
         existingUser = new UserData ("ExistingUser", "existingUserPassword", "eu@mail.com");
         newUser = new UserData("NewUser", "newUserPassword", "nu@mail.com");
         SERVERFACADE.register(existingUser.username(), existingUser.password(), existingUser.email());
