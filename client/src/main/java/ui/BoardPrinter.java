@@ -42,7 +42,9 @@ public class BoardPrinter {
         }
 
         out.print(SET_BG_COLOR_BLACK);
-        out.print(SET_TEXT_COLOR_WHITE);
+//        out.print(SET_TEXT_COLOR_WHITE);
+        out.println();
+        out.print(RESET_BG_COLOR);
     }
 
     private static void drawNumHeader(PrintStream out, String headerText) {
@@ -74,12 +76,14 @@ public class BoardPrinter {
     }
 
     private static void drawWhiteSideBoard(PrintStream out) {
+        int numHeadCnt = 1;
         for (int boardRow = 8; boardRow >= 1; boardRow--) {
-            drawNumHeader(out, headers[boardRow]);
+            drawNumHeader(out, headers[numHeadCnt]);
             for (int boardCol = 1; boardCol < BOARD_SIZE_IN_SQUARES; boardCol++) {
                 drawRowOfSquares(out, boardRow, boardCol);
             }
-            drawNumHeader(out, headers[boardRow]);
+            drawNumHeader(out, headers[numHeadCnt]);
+            numHeadCnt++;
             setBlack(out);
             out.println();
         }
