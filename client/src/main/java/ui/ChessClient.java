@@ -144,4 +144,5 @@ public class ChessClient {
             throw new IOException("You must login or register");
         }
     }
+
 }

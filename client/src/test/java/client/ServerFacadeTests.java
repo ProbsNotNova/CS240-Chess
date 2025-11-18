@@ -24,7 +24,7 @@ public class ServerFacadeTests {
     @BeforeAll
     public static void init() throws IOException {
         server = new Server();
-        var port = server.run(0);
+        var port = server.run(8080);
         System.out.println("Started test HTTP server on " + port);
         System.out.println("Started Client Unit Tests");
         existingUser = new UserData ("ExistingUser", "existingUserPassword", "eu@mail.com");
