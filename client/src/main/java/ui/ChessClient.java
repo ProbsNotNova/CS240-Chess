@@ -20,18 +20,7 @@ public class ChessClient {
 
     private final ServerFacade server = new ServerFacade();
     private final BoardPrinter bdPrint = new BoardPrinter();
-    //    private final WebSocketFacade ws;
 
-
-//    public ChessClient(String serverUrl) throws ResponseException {
-//        server = new ServerFacade(serverUrl);
-//        ws = new WebSocketFacade(serverUrl, this);
-//    }
-
-//    public void notify(Notification notification) {
-//        System.out.println(RED + notification.message());
-//        printPrompt();
-//    }
     // E definition of REPL loop
     public String eval(String input) throws IOException {
         String[] tokens = input.split(" ");

@@ -147,8 +147,6 @@ public class ClientUnitTests {
 
         });
     }
-    private void joinHelp(String... params) throws IOException {
-    }
 // BAD JOIN TEST
     @Test
     @Order(11)

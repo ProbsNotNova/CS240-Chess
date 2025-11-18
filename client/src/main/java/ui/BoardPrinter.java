@@ -13,10 +13,10 @@ import static ui.EscapeSequences.*;
 
 public class BoardPrinter {
     private static ChessBoard board = new ChessBoard();
-    private static final String[] headers = { " a  b  c  d  e  f  g  h ",
+    private static final String[] headers = { " A  B  C  D  E  F  G  H ",
                                               " 8 ", " 7 ", " 6 ", " 5 ",
                                               " 4 ", " 3 ", " 2 ", " 1 ",
-                                              " h  g  f  e  d  c  b  a "};
+                                              " H  G  F  E  D  C  B  A "};
 
     // Board dimensions.
     private static final int BOARD_SIZE_IN_SQUARES = 9;
