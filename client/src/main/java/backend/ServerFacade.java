@@ -3,7 +3,6 @@ package backend;
 import com.google.gson.Gson;
 import model.*;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -88,6 +87,6 @@ public class ServerFacade {
     }
     public void clear() throws IOException {
         HttpRequest request = buildRequest("db", "DELETE", null, null);
-        sendRequest(request, AuthData.class);
+        sendRequest(request, null);
     }
 }

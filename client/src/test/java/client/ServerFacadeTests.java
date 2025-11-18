@@ -3,7 +3,7 @@ package client;
 import backend.ServerFacade;
 import model.UserData;
 import org.junit.jupiter.api.*;
-import ui.Console;
+import server.Server;
 
 import java.io.IOException;
 import java.util.*;
@@ -12,59 +12,47 @@ import java.util.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ServerFacadeTests {
 
-    private static final Console CONSOLE = new Console();
+    private static Server server;
+    private static final ServerFacade SERVERFACADE = new ServerFacade();
 
     private static UserData existingUser;
     private static UserData newUser;
+    private static String loginResult;
 
     // ### TESTING SETUP/CLEANUP ###
 
     @BeforeAll
-    public static void init() {
+    public static void init() throws IOException {
+        server = new Server();
+        var port = server.run(0);
+        System.out.println("Started test HTTP server on " + port);
         System.out.println("Started Client Unit Tests");
         existingUser = new UserData ("ExistingUser", "existingUserPassword", "eu@mail.com");
         newUser = new UserData("NewUser", "newUserPassword", "nu@mail.com");
+        SERVERFACADE.register(existingUser.username(), existingUser.password(), existingUser.email());
+
+    }
+
+    @AfterAll
+    static void stopServer() throws IOException {
+        SERVERFACADE.clear();
+        server.stop();
     }
 
     @BeforeEach
     public void setup() throws IOException {
-        CONSOLE.client.clear();
-        Assertions.assertDoesNotThrow(()->{
-            CONSOLE.client.register(existingUser.username(), existingUser.password(), existingUser.email());
-            CONSOLE.client.logout();
-        });
-
+        loginResult = SERVERFACADE.login(existingUser.username(), existingUser.password());
     }
 
     // ### server-LEVEL UNIT TESTS ###
 
-// GOOD LOGIN TEST
-    @Test
-    @Order(2)
-    @DisplayName("Normal User Login")
-    public void loggingIn() {
-        Assertions.assertDoesNotThrow(()->{
-            String loginResult = CONSOLE.client.login(existingUser.username(), existingUser.password());
-            Assertions.assertEquals(String.format("Signed in as %s", existingUser.username()), loginResult,
-                    "Response didn't have same string return");
-        });
-    }
-// BAD LOGIN TEST
-    @Test
-    @Order(3)
-    @DisplayName("Login Invalid Params")
-    public void loginInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.login("wee"));
-    }
 // GOOD REGISTER TEST
     @Test
     @Order(4)
     @DisplayName("Normal User Registration")
     public void registering() {
         Assertions.assertDoesNotThrow(()->{
-            String regResult = CONSOLE.client.register(newUser.username(), newUser.password(), newUser.email());
-            Assertions.assertEquals("Registered Successfully", regResult,
-                    "Response didn't have same string return");
+            SERVERFACADE.register(newUser.username(), newUser.password(), newUser.email());
 
         });
     }
@@ -72,8 +60,25 @@ public class ServerFacadeTests {
     @Test
     @Order(5)
     @DisplayName("Register Invalid Params")
-    public void registerBadRequest() {
-        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.register(newUser.password()));
+    public void registerBadRequest() throws IOException {
+        SERVERFACADE.logout(loginResult);
+        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.register(newUser.password(), null, null));
+    }
+    // GOOD LOGIN TEST
+    @Test
+    @Order(2)
+    @DisplayName("Normal User Login")
+    public void loggingIn() {
+        Assertions.assertDoesNotThrow(()->{
+            SERVERFACADE.login(existingUser.username(), existingUser.password());
+        });
+    }
+    // BAD LOGIN TEST
+    @Test
+    @Order(3)
+    @DisplayName("Login Invalid Params")
+    public void loginInvalidParams() {
+        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.login(null, null));
     }
 // GOOD LOGOUT TEST
     @Test
@@ -82,10 +87,7 @@ public class ServerFacadeTests {
     public void loggingOut() {
         //log out existing user
         Assertions.assertDoesNotThrow(()-> {
-            CONSOLE.client.login(existingUser.username(), existingUser.password());
-            String regResult = CONSOLE.client.logout();
-            Assertions.assertEquals("Logging Out", regResult,
-                    "Response didn't have same string return");
+            SERVERFACADE.logout(loginResult);
         });
     }
 // BAD LOGOUT TEST
@@ -93,7 +95,7 @@ public class ServerFacadeTests {
     @Order(7)
     @DisplayName("Logout Invalid Params")
     public void logoutInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.logout(newUser.password()));
+        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.logout(newUser.password()));
     }
 // GOOD CREATE GAME TEST
     @Test
@@ -101,8 +103,7 @@ public class ServerFacadeTests {
     @DisplayName("Valid Creation")
     public void creatingGame() {
         Assertions.assertDoesNotThrow(()->{
-            CONSOLE.client.login(existingUser.username(), existingUser.password());
-            CONSOLE.client.createGame("Game");
+            SERVERFACADE.createGame("Game", loginResult);
         });
     }
     // BAD CREATE GAME TEST 1
@@ -110,9 +111,8 @@ public class ServerFacadeTests {
     @Order(9)
     @DisplayName("Create with Invalid Params")
     public void createGameInvalidParams() {
-        //log out user so auth is invalid
-        Assertions.assertThrows(IOException.class, CONSOLE.client::createGame);
-    }
+        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.createGame(null, loginResult));
+    } // make sure to change all to actual server facade and get auth etc
 // GOOD JOIN TEST
     @Test
     @Order(10)
@@ -120,12 +120,8 @@ public class ServerFacadeTests {
     public void joiningGame() {
         //create game
         Assertions.assertDoesNotThrow(()-> {
-            CONSOLE.client.login(existingUser.username(), existingUser.password());
-            CONSOLE.client.createGame("game");
-            String[] tokens = {"1", "WHITE"};
-            String[] params = Arrays.copyOfRange(tokens, 0, tokens.length);
-            CONSOLE.client.joinGame(params);
-
+            int gameID = SERVERFACADE.createGame("game", loginResult);
+            SERVERFACADE.joinGame("WHITE", gameID, loginResult);
         });
     }
 // BAD JOIN TEST
@@ -133,7 +129,7 @@ public class ServerFacadeTests {
     @Order(11)
     @DisplayName("Join Invalid Params")
     public void joinGameInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.joinGame("one"));
+        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.joinGame("one", 3, loginResult));
     }
 // GOOD LIST GAMES TEST
     @Test
@@ -141,10 +137,9 @@ public class ServerFacadeTests {
     @DisplayName("List Games")
     public void listingGames() {
         Assertions.assertDoesNotThrow(()-> {
-            CONSOLE.client.login(existingUser.username(), existingUser.password());
-            CONSOLE.client.createGame("uwu");
-            CONSOLE.client.createGame("owo");
-            CONSOLE.client.listGames();
+            SERVERFACADE.createGame("uwu", loginResult);
+            SERVERFACADE.createGame("owo", loginResult);
+            SERVERFACADE.listGames(loginResult);
         });
     }
 // BAD LIST GAMES TEST
@@ -152,7 +147,7 @@ public class ServerFacadeTests {
     @Order(12)
     @DisplayName("List Games Invalid Params")
     public void listingGamesInvalidParams() {
-        Assertions.assertThrows(IOException.class, ()->CONSOLE.client.listGames("GAME NAME", "woah cool"));
+        Assertions.assertThrows(IOException.class, ()->SERVERFACADE.listGames("bad auth"));
     }
 
 }

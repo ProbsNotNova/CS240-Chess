@@ -1,13 +1,11 @@
 package ui;
 
 import backend.ServerFacade;
-import com.google.gson.Gson;
 import model.GameData;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Scanner;
 
 import static java.lang.Integer.parseInt;
 
@@ -145,8 +143,5 @@ public class ChessClient {
         if (state == State.SIGNEDOUT) {
             throw new IOException("You must login or register");
         }
-    }
-    public void clear() throws IOException {
-        server.clear();
     }
 }
