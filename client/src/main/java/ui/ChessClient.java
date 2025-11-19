@@ -4,8 +4,7 @@ import backend.ServerFacade;
 import model.GameData;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 import static java.lang.Integer.parseInt;
 
@@ -14,10 +13,22 @@ public class ChessClient {
     private State state = State.SIGNEDOUT;
     private String sessionAuth = null;
     public String currentPlayerColor = null;
+    private final Map<Integer, Integer> mappedID = new HashMap<>();
 
     private final ServerFacade server = new ServerFacade(8080);
     private final BoardPrinter bdPrint = new BoardPrinter();
+    //    private final WebSocketFacade ws;
 
+
+//    public ChessClient(String serverUrl) throws ResponseException {
+//        server = new ServerFacade(serverUrl);
+//        ws = new WebSocketFacade(serverUrl, this);
+//    }
+
+    //    public void notify(Notification notification) {
+//        System.out.println(RED + notification.message());
+//        printPrompt();
+//    }
     // E definition of REPL loop
     public String eval(String input) throws IOException {
         String[] tokens = input.split(" ");
@@ -91,19 +102,24 @@ public class ChessClient {
         if (params.length != 1) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-        int gameID = server.createGame(params[0], sessionAuth);
-        return String.format("Created game named %s with ID %s", params[0], gameID);
+        server.createGame(params[0], sessionAuth);
+        return String.format("Created game named %s", params[0]);
     }
     public String listGames(String... params) throws IOException {
         assertSignedIn();
         if (params.length != 0) {
             throw new IOException("Invalid Parameters, Check help()");
         }
+
         Collection<GameData> games = server.listGames(sessionAuth);
         var result = new StringBuilder();
+        int cnt = 1;
+        mappedID.clear();
         for (GameData game : games) {
+            mappedID.put(cnt, game.gameID());
             result.append("GameID: ").append(game.gameID()).append(" | Gamename: ").append(game.gameName());
             result.append(" | WHITE: ").append(game.whiteUsername()).append(" | BLACK: ").append(game.blackUsername()).append('\n');
+            cnt++;
         }
         return result.toString();
     }
@@ -112,20 +128,35 @@ public class ChessClient {
         if (params.length != 2) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-        GameData game = server.joinGame(params[1], parseInt(params[0]), sessionAuth);
-        currentPlayerColor = params[1];
-        bdPrint.printBoard(params[1], null);
-        return String.format("Joined game %s as %s team", game.gameName(), params[1]);
+        try {
+            if (mappedID.get(parseInt(params[0])) == null) {
+                throw new IOException("Game Does Not Exist");
+            }
+            GameData game = server.joinGame(params[1], mappedID.get(parseInt(params[0])), sessionAuth);
+
+            currentPlayerColor = params[1];
+            bdPrint.printBoard(params[1], null);
+            return String.format("Joined game %s as %s team", game.gameName(), params[1]);
+        } catch (NumberFormatException e) {
+            throw new IOException("Game Number Must be Integer");
+        }
     }
     public String observeGame(String... params) throws IOException {
         assertSignedIn();
         if (params.length != 1) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-        Collection<GameData> games = server.listGames(sessionAuth);
-        GameData game = (GameData) games.toArray()[parseInt(params[0])-1];
-        bdPrint.printBoard("WHITE", game.game().getBoard());
-        return String.format("Observing game with ID %s", params[0]);
+        try {
+            if (mappedID.get(parseInt(params[0])) == null) {
+                throw new IOException("Game Does Not Exist");
+            }
+            if (mappedID.containsKey(parseInt(params[0]))) {
+                bdPrint.printBoard("WHITE", null);
+            }
+            return String.format("Observing game with ID %s", params[0]);
+        } catch (NumberFormatException e) {
+            throw new IOException("Game Number Must be Integer");
+        }
     }
     public String logout(String... params) throws IOException {
         assertSignedIn();

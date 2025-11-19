@@ -23,14 +23,9 @@ public class Console {
             try {
                 result = client.eval(line);
                 System.out.print(SET_TEXT_COLOR_BLUE + result);
-//                if (client.currentPlayerColor.equals("WHITE")) {
-//
-//                } else if (client.currentPlayerColor.equals("BLACK")) {
-//
-//                }
 
             } catch (Throwable e) {
-                var msg = e.toString();
+                var msg = e.getMessage();
                 System.out.print(msg);
             }
         }
