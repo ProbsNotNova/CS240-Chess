@@ -2,6 +2,8 @@ package ui;
 
 import backend.ServerFacade;
 import model.GameData;
+import websocket.NotificationHandler;
+import websocket.WebSocketFacade;
 
 import java.io.IOException;
 import java.util.*;
@@ -17,17 +19,17 @@ public class ChessClient {
 
     private final ServerFacade server = new ServerFacade(8080);
     private final BoardPrinter bdPrint = new BoardPrinter();
-    //    private final WebSocketFacade ws;
-
-
-//    public ChessClient(String serverUrl) throws ResponseException {
+//    private final WebSocketFacade ws;
+//
+//
+//    public ChessClient(String serverUrl) throws IOException {
 //        server = new ServerFacade(serverUrl);
 //        ws = new WebSocketFacade(serverUrl, this);
 //    }
-
-    //    public void notify(Notification notification) {
-//        System.out.println(RED + notification.message());
-//        printPrompt();
+//
+//    public void notify(Notification notification) {
+//    System.out.println(RED + notification.message());
+//    printPrompt();
 //    }
     // E definition of REPL loop
     public String eval(String input) throws IOException {

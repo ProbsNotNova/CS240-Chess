@@ -1,5 +1,8 @@
 package websocket.messages;
 
+import com.google.gson.Gson;
+// UPDATE ANY NOTIFICATION MENTIONS IN
+// PETSHOP IMPORT TO USE THIS INSTEAD
 import java.util.Objects;
 
 /**
@@ -15,6 +18,10 @@ public class ServerMessage {
         LOAD_GAME,
         ERROR,
         NOTIFICATION
+    }
+
+    public String toString() {
+        return new Gson().toJson(this);
     }
 
     public ServerMessage(ServerMessageType type) {
