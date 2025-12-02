@@ -1,5 +1,6 @@
 package server.websocket;
 
+import chess.ChessGame;
 import chess.ChessMove;
 import com.google.gson.Gson;
 import server.Server;
@@ -45,15 +46,32 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     }
 
-    public void forfeit(String authToken, int gameID, Session session) {
 
+    //Connect command method maybe both player and observer
+    private void enter(String authToken, Session session) throws IOException {
+        int gameID = 1; // ** temp variable ** //
+        connections.add(session, gameID);
+        Server server = new Server();
+        // line above is due to idea for forming message, which should
+        // send the user's name, not their authToken. The AuthToken can
+        // be used to retrieve the user data though unless better option available.
+        var message = String.format("%s joined as %s", authToken, /*ChessGame.TeamColor*/);
+        // message alternative for joining as observer. maybe third option for TEAM color
+        var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        Collection<Session> includeSessions = new ArrayList<>();
+        includeSessions.add(session);
+        connections.broadcast(includeSessions, serverMessage);
     }
 
+    // make move command method
     public void move(String authToken, int gameID, ChessMove move, Session session) throws MessageException {
         try {
-            var message = String.format("%s says %s", petName, sound);
+            var message = String.format("%s moved %s to %s", playerName, pieceType, move.getEndPosition());
+            // message must be sent with corresponding board update
             var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-
+            Collection<Session> includeSessions = new ArrayList<>();
+            includeSessions.add(session);
+            connections.broadcast(includeSessions, serverMessage);
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
         }
@@ -67,6 +85,35 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     }
 
+    // resign command method
+    public void forfeit(String authToken, int gameID, Session session) throws MessageException {
+        try {
+            var message = String.format("%s resigned the game", playerName);
+            // message must be sent with corresponding board update
+            var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            Collection<Session> includeSessions = new ArrayList<>();
+            includeSessions.add(session);
+            connections.broadcast(includeSessions, serverMessage);
+        } catch (Exception ex) {
+            throw new MessageException(ex.getMessage(), 500);
+        }
+    }
+
+    // leave command method
+    private void exit(String authToken, Session session) throws IOException {
+        var message = String.format("%s left the game", playerName);
+        var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        Collection<Session> includeSessions = new ArrayList<>();
+        includeSessions.add(session);
+        connections.broadcast(includeSessions, serverMessage);
+        int gameID = 1; // ** temp variable ** //
+        connections.remove(session, gameID);
+    }
+
+    // Player is in check notif method
+
+
+    // Player is in checkmate notif method
 
 
    ///
@@ -75,27 +122,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         System.out.println("Websocket closed");
     }
 
-    private void enter(String authToken, Session session) throws IOException {
-        int gameID = 1; // ** temp variable ** //
-        connections.add(session, gameID);
-        Server server = new Server();
-        // line above is due to idea for forming message, which should
-        // send the user's name, not their authToken. The AuthToken can
-        // be used to retrieve the user data though unless better option available.
-        var message = String.format("%s is in the shop", authToken);
-        var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        Collection<Session> includeSessions = new ArrayList<>();
-        includeSessions.add(session);
-        connections.broadcast(includeSessions, serverMessage);
-    }
 
-    private void exit(String authToken, Session session) throws IOException {
-        var message = String.format("%s left the shop", visitorName);
-        var serverMessage = new Notification(Notification.Type.DEPARTURE, message);
-        connections.broadcast(session, notification);
-        int gameID = 1; // ** temp variable ** //
-        connections.remove(session, gameID);
-    }
 
     public void makeNoise(String petName, String sound) throws MessageException {
         try {
