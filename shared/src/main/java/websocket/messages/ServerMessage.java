@@ -14,12 +14,10 @@ import java.util.Objects;
  */
 public class ServerMessage {
     private ChessGame game;
-    private String message = null;
+    private String message;
     ServerMessageType serverMessageType;
 
-    public ChessGame getGame() {
-        return game;
-    }
+
 
     public enum ServerMessageType {
         LOAD_GAME,
@@ -27,14 +25,9 @@ public class ServerMessage {
         NOTIFICATION
     }
 
-    public String toString() {
-        return new Gson().toJson(this);
+    public ServerMessage() {
+        this.serverMessageType = ServerMessageType.ERROR;
     }
-
-    public String getMessage() {
-        return message;
-    }
-
 
     public ServerMessage(ServerMessageType type, String message) {
         this.serverMessageType = type;
@@ -44,6 +37,18 @@ public class ServerMessage {
     public ServerMessage(ServerMessageType type, ChessGame game) {
         this.serverMessageType = type;
         this.game = game;
+    }
+
+    public String toString() {
+        return new Gson().toJson(this);
+    }
+
+    public ChessGame getGame() {
+        return game;
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     public ServerMessageType getServerMessageType() {

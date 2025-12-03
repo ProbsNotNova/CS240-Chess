@@ -47,7 +47,7 @@ public class ConnectionManager {
         String msg = serverMessage.toString();
         for (SessionInfo sessionInfo : connections.get(gameID)) {
                 if (sessionInfo.savedSession().isOpen()) {
-                    if (sessionInfo.savedSession().equals(excludeSession)) {
+                    if (!sessionInfo.savedSession().equals(excludeSession)) {
                         sessionInfo.savedSession().getRemote().sendString(msg);
                     }
                 }

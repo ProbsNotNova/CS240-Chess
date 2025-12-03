@@ -16,6 +16,7 @@ import io.javalin.websocket.WsMessageContext;
 import io.javalin.websocket.WsMessageHandler;
 import org.eclipse.jetty.websocket.api.Session;
 import websocket.commands.UserGameCommand;
+import websocket.messages.ErrorMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -39,14 +40,15 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     public void handleMessage(WsMessageContext ctx) {
         try {
             UserGameCommand userGameCommand = new Gson().fromJson(ctx.message(), UserGameCommand.class);
+            /// move keeps coming in as null here for some reason. is it not ChessMove????
 
             // Trying here, otherwise only in Enter, or in all methods individually ew
-            if (!sqlDataAccess.getAuth(userGameCommand.getAuthToken()).authToken().equals(userGameCommand.getAuthToken())) {
-                var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid Auth");
+            if (sqlDataAccess.getAuth(userGameCommand.getAuthToken()) == null) {
+                var serverMessage = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid Auth");
                 connections.rootBroadcast(ctx.session, serverMessage);
                 return;
             } else if (userGameCommand.getGameID() > sqlDataAccess.listGames().size()) {
-                var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid GameID");
+                var serverMessage = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid GameID");
                 connections.rootBroadcast(ctx.session, serverMessage);
                 return;
             }
@@ -90,7 +92,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             // Message Others Notification
             var message = String.format("%s joined as %s", sessionInfo.username(), sessionInfo.teamColor());
             var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-            connections.broadcast(null, gameID, serverMessage);
+            connections.broadcast(session, gameID, serverMessage);
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
         }
@@ -152,6 +154,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         connections.broadcast(session, gameID, serverMessage);
 
         connections.remove(gameID, authInfo.get(authToken));
+        authInfo.remove(authToken);
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
         }
