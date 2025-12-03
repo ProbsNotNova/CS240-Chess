@@ -1,5 +1,6 @@
 package websocket.messages;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
 // UPDATE ANY NOTIFICATION MENTIONS IN
 // PETSHOP IMPORT TO USE THIS INSTEAD
@@ -12,8 +13,13 @@ import java.util.Objects;
  * methods.
  */
 public class ServerMessage {
-    private final String message;
+    private ChessGame game;
+    private String message = null;
     ServerMessageType serverMessageType;
+
+    public ChessGame getGame() {
+        return game;
+    }
 
     public enum ServerMessageType {
         LOAD_GAME,
@@ -29,9 +35,15 @@ public class ServerMessage {
         return message;
     }
 
+
     public ServerMessage(ServerMessageType type, String message) {
         this.serverMessageType = type;
         this.message = message;
+    }
+
+    public ServerMessage(ServerMessageType type, ChessGame game) {
+        this.serverMessageType = type;
+        this.game = game;
     }
 
     public ServerMessageType getServerMessageType() {

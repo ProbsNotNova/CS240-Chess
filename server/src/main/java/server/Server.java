@@ -6,6 +6,7 @@ import model.*;
 //import server.websocket.WebSocketHandler;
 import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
+import server.websocket.WebSocketHandler;
 import service.UserService;
 import io.javalin.*;
 import io.javalin.http.Context;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 public class Server {
     private UserService service;
-
+    private final WebSocketHandler webSocketHandler;
     private final Javalin javalin;
 
     // Exception Handler
@@ -25,6 +26,7 @@ public class Server {
     }
 
     public Server() {
+        webSocketHandler = new WebSocketHandler();
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
 
         try {
@@ -42,6 +44,11 @@ public class Server {
         javalin.post("/game", this::createGameHandler);
         javalin.put("/game", this::joinGameHandler);
         javalin.delete("/db", this::clearDataBaseHandler);
+        javalin.ws("/ws", ws -> {
+            ws.onConnect(webSocketHandler);
+            ws.onMessage(webSocketHandler);
+            ws.onClose(webSocketHandler);
+        });
     }
 
     // Server Endpoint Handler Methods

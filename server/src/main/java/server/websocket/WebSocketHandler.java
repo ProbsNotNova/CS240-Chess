@@ -19,11 +19,12 @@ import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsCloseHandler {
 
     private final ConnectionManager connections = new ConnectionManager();
-//    private final HashMap<String, SessionInfo> authInfo = new HashMap<>();
+    private final HashMap<String, SessionInfo> authInfo = new HashMap<>();
     private final SqlDataAccess sqlDataAccess = new SqlDataAccess();
 //    private SessionInfo sessionInfo;
 
@@ -42,21 +43,19 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             // Trying here, otherwise only in Enter, or in all methods individually ew
             if (!sqlDataAccess.getAuth(userGameCommand.getAuthToken()).authToken().equals(userGameCommand.getAuthToken())) {
                 var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid Auth");
-                connections.rootErrorBroadcast(ctx.session, serverMessage);
+                connections.rootBroadcast(ctx.session, serverMessage);
                 return;
             } else if (userGameCommand.getGameID() > sqlDataAccess.listGames().size()) {
                 var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid GameID");
-                connections.rootErrorBroadcast(ctx.session, serverMessage);
+                connections.rootBroadcast(ctx.session, serverMessage);
                 return;
             }
 
             switch (userGameCommand.getCommandType()) {
-                case CONNECT -> enter(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
-                                      userGameCommand.getSessionInfo(), ctx.session);
-                case MAKE_MOVE -> move(userGameCommand.getAuthToken(), userGameCommand.getGameID(), userGameCommand.getSessionInfo(),
-                                       userGameCommand.makeMove(), ctx.session);
-                case LEAVE -> exit(userGameCommand.getAuthToken(), userGameCommand.getGameID(), userGameCommand.getSessionInfo(), ctx.session);
-                case RESIGN -> forfeit(userGameCommand.getAuthToken(), userGameCommand.getGameID(), userGameCommand.getSessionInfo(), ctx.session);
+                case CONNECT -> enter(userGameCommand.getAuthToken(), userGameCommand.getGameID(), ctx.session);
+                case MAKE_MOVE -> move(userGameCommand.getAuthToken(), userGameCommand.getGameID(), userGameCommand.makeMove(), ctx.session);
+                case LEAVE -> exit(userGameCommand.getAuthToken(), userGameCommand.getGameID(), ctx.session);
+                case RESIGN -> forfeit(userGameCommand.getAuthToken(), userGameCommand.getGameID(), ctx.session);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -71,26 +70,34 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     }
 
     //Connect command method maybe both player and observer
-    private void enter(String authToken, int gameID, SessionInfo sessionInfo, Session session) throws MessageException {
+    private void enter(String authToken, int gameID, Session session) throws MessageException {
         try {
-
+            SessionInfo sessionInfo;
+            if (sqlDataAccess.getGame(gameID).whiteUsername().equals(sqlDataAccess.getAuth(authToken).username())) {
+                sessionInfo = new SessionInfo(gameID, sqlDataAccess.getAuth(authToken).username(), "WHITE", session);
+            } else if (sqlDataAccess.getGame(gameID).blackUsername().equals(sqlDataAccess.getAuth(authToken).username())) {
+                sessionInfo = new SessionInfo(gameID, sqlDataAccess.getAuth(authToken).username(), "BLACK", session);
+            } else {
+                sessionInfo = new SessionInfo(gameID, sqlDataAccess.getAuth(authToken).username(), "OBSERVE", session);
+            }
+            authInfo.put(authToken, sessionInfo);
             connections.add(gameID, sessionInfo);
 
             // Message Root Client LOADGAME
-            var ldGmMsg = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, new Gson().toJson(sqlDataAccess.getGame(gameID).game()));
-            connections.broadcast(session, gameID, ldGmMsg);
+            var ldGmMsg = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, sqlDataAccess.getGame(gameID).game());
+            connections.rootBroadcast(session, ldGmMsg);
 
             // Message Others Notification
             var message = String.format("%s joined as %s", sessionInfo.username(), sessionInfo.teamColor());
             var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-            connections.broadcast(session, gameID, serverMessage);
+            connections.broadcast(null, gameID, serverMessage);
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
         }
     }
 
     // make move command method
-    public void move(String authToken, int gameID, SessionInfo sessionInfo, ChessMove move, Session session) throws MessageException {
+    public void move(String authToken, int gameID, ChessMove move, Session session) throws MessageException {
         try {
             sqlDataAccess.getGame(gameID).game().makeMove(move);
 
@@ -102,7 +109,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             // Message Others Notification
             ChessPiece mvdPc = sqlDataAccess.getGame(gameID).game().getBoard().getPiece(move.getEndPosition());
             var message =
-                String.format("%s moved %s from %s to %s", sessionInfo.username(), mvdPc, move.getStartPosition(), move.getEndPosition());
+                String.format("%s moved %s from %s to %s", authInfo.get(authToken).username(), mvdPc, move.getStartPosition(), move.getEndPosition());
             var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(session, gameID, serverMessage);
 
@@ -116,14 +123,14 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     }
 
     // resign command method
-    public void forfeit(String authToken, int gameID, SessionInfo sessionInfo, Session session) throws MessageException {
+    public void forfeit(String authToken, int gameID, Session session) throws MessageException {
         try {
             // mark game as over
             sqlDataAccess.getGame(gameID).game().setGameOver();
             // update game in database accordingly???????????????
 
 
-            var message = String.format("%s resigned the game", sessionInfo.username());
+            var message = String.format("%s resigned the game", authInfo.get(authToken).username());
             var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(null, gameID, serverMessage);
         } catch (Exception ex) {
@@ -132,19 +139,19 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     }
 
     // leave command method for both player and observer
-    private void exit(String authToken, int gameID, SessionInfo sessionInfo, Session session) throws MessageException {
+    private void exit(String authToken, int gameID, Session session) throws MessageException {
         try {
-        if (sessionInfo.teamColor().equals("WHITE")) {
+        if (authInfo.get(authToken).teamColor().equals("WHITE")) {
             sqlDataAccess.updateGame(gameID, ChessGame.TeamColor.WHITE, null);
         } else {
             sqlDataAccess.updateGame(gameID, ChessGame.TeamColor.BLACK, null);
         }
 
-        var message = String.format("%s left the game", sessionInfo.username());
+        var message = String.format("%s left the game", authInfo.get(authToken).username());
         var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
         connections.broadcast(session, gameID, serverMessage);
 
-        connections.remove(gameID, sessionInfo);
+        connections.remove(gameID, authInfo.get(authToken));
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
         }

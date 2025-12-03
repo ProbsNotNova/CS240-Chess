@@ -20,7 +20,10 @@ public class ConnectionManager {
 
     // Add a session to the gameID sessionGroup
     public void add(int gameID, SessionInfo sessionInfo) {
-        Collection<SessionInfo> sessionGroup = connections.get(gameID);
+        Collection<SessionInfo> sessionGroup = new ArrayList<>();
+        if (connections.get(gameID) !=null) {
+            sessionGroup = connections.get(gameID);
+        }
         sessionGroup.add(sessionInfo);
         connections.put(gameID, sessionGroup);
     }
@@ -32,7 +35,7 @@ public class ConnectionManager {
         connections.put(gameID, sessionGroup);
     }
 
-    public void rootErrorBroadcast(Session session, ServerMessage serverMessage) throws IOException {
+    public void rootBroadcast(Session session, ServerMessage serverMessage) throws IOException {
         String msg = serverMessage.toString();
         if (session.isOpen()) {
             session.getRemote().sendString(msg);
@@ -44,7 +47,7 @@ public class ConnectionManager {
         String msg = serverMessage.toString();
         for (SessionInfo sessionInfo : connections.get(gameID)) {
                 if (sessionInfo.savedSession().isOpen()) {
-                    if (excludeSession.equals(sessionInfo.savedSession())) {
+                    if (sessionInfo.savedSession().equals(excludeSession)) {
                         sessionInfo.savedSession().getRemote().sendString(msg);
                     }
                 }

@@ -19,14 +19,12 @@ public class UserGameCommand {
     private final String authToken;
     private final int gameID;
 
-    private final SessionInfo sessionInfo;
     private final ChessMove moveToMake;
 
-    public UserGameCommand(CommandType commandType, String authToken, SessionInfo sessionInfo, int gameID, ChessMove moveToMake) {
+    public UserGameCommand(CommandType commandType, String authToken, int gameID, ChessMove moveToMake) {
         this.commandType = commandType;
         this.authToken = authToken;
         this.gameID = gameID;
-        this.sessionInfo = sessionInfo;
         this.moveToMake = moveToMake;
     }
 
@@ -49,9 +47,9 @@ public class UserGameCommand {
         return gameID;
     }
 
-    public SessionInfo getSessionInfo() {
-        return sessionInfo;
-    }
+//    public SessionInfo getSessionInfo() {
+//        return sessionInfo;
+//    }
 
     public ChessMove makeMove() {
         return moveToMake;
