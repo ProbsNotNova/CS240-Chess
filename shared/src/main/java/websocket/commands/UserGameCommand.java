@@ -19,13 +19,13 @@ public class UserGameCommand {
     private final String authToken;
     private final int gameID;
 
-    private final ChessMove moveToMake;
+    private final ChessMove move;
 
-    public UserGameCommand(CommandType commandType, String authToken, int gameID, ChessMove moveToMake) {
+    public UserGameCommand(CommandType commandType, String authToken, int gameID, ChessMove move) {
         this.commandType = commandType;
         this.authToken = authToken;
         this.gameID = gameID;
-        this.moveToMake = moveToMake;
+        this.move = move;
     }
 
     public enum CommandType {
@@ -52,7 +52,7 @@ public class UserGameCommand {
 //    }
 
     public ChessMove makeMove() {
-        return moveToMake;
+        return move;
     }
 
     @Override

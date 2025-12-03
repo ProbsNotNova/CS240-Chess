@@ -105,7 +105,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
             // Message All LOADGAME
             var ldGmMsg =
-                new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, new Gson().toJson(sqlDataAccess.getGame(gameID).game().getBoard()));
+                new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, sqlDataAccess.getGame(gameID).game());
             connections.broadcast(null, gameID, ldGmMsg);
 
             // Message Others Notification
