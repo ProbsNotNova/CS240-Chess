@@ -12,6 +12,7 @@ import java.util.Objects;
  * methods.
  */
 public class ServerMessage {
+    private final String message;
     ServerMessageType serverMessageType;
 
     public enum ServerMessageType {
@@ -24,8 +25,13 @@ public class ServerMessage {
         return new Gson().toJson(this);
     }
 
-    public ServerMessage(ServerMessageType type) {
+    public String getMessage() {
+        return message;
+    }
+
+    public ServerMessage(ServerMessageType type, String message) {
         this.serverMessageType = type;
+        this.message = message;
     }
 
     public ServerMessageType getServerMessageType() {

@@ -1,10 +1,13 @@
 package server.websocket;
 
+import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.ChessPiece;
 import com.google.gson.Gson;
-import server.Server;
-import server.websocket.MessageException;
+import dataaccess.DataAccessException;
+import dataaccess.SqlDataAccess;
+import model.SessionInfo;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsCloseHandler;
 import io.javalin.websocket.WsConnectContext;
@@ -16,12 +19,13 @@ import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 
 public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsCloseHandler {
 
     private final ConnectionManager connections = new ConnectionManager();
+//    private final HashMap<String, SessionInfo> authInfo = new HashMap<>();
+    private final SqlDataAccess sqlDataAccess = new SqlDataAccess();
+//    private SessionInfo sessionInfo;
 
     @Override
     public void handleConnect(WsConnectContext ctx) {
@@ -29,108 +33,153 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         ctx.enableAutomaticPings();
     }
 
+
     @Override
     public void handleMessage(WsMessageContext ctx) {
         try {
             UserGameCommand userGameCommand = new Gson().fromJson(ctx.message(), UserGameCommand.class);
-            switch (userGameCommand.getCommandType()) {
-                case CONNECT -> enter(userGameCommand.getAuthToken(), ctx.session);
-                case MAKE_MOVE -> move(userGameCommand.getAuthToken(), userGameCommand.getGameID(), userGameCommand.makeMove(), ctx.session);
-                case LEAVE -> exit(userGameCommand.getAuthToken(), ctx.session);
-                case RESIGN -> forfeit(userGameCommand.getAuthToken(), userGameCommand.getGameID(), ctx.session);
+
+            // Trying here, otherwise only in Enter, or in all methods individually ew
+            if (!sqlDataAccess.getAuth(userGameCommand.getAuthToken()).authToken().equals(userGameCommand.getAuthToken())) {
+                var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid Auth");
+                connections.rootErrorBroadcast(ctx.session, serverMessage);
+                return;
+            } else if (userGameCommand.getGameID() > sqlDataAccess.listGames().size()) {
+                var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid GameID");
+                connections.rootErrorBroadcast(ctx.session, serverMessage);
+                return;
             }
-        } catch (IOException ex) {
+
+            switch (userGameCommand.getCommandType()) {
+                case CONNECT -> enter(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
+                                      userGameCommand.getSessionInfo(), ctx.session);
+                case MAKE_MOVE -> move(userGameCommand.getAuthToken(), userGameCommand.getGameID(), userGameCommand.getSessionInfo(),
+                                       userGameCommand.makeMove(), ctx.session);
+                case LEAVE -> exit(userGameCommand.getAuthToken(), userGameCommand.getGameID(), userGameCommand.getSessionInfo(), ctx.session);
+                case RESIGN -> forfeit(userGameCommand.getAuthToken(), userGameCommand.getGameID(), userGameCommand.getSessionInfo(), ctx.session);
+            }
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
 
-
     }
 
-
-    //Connect command method maybe both player and observer
-    private void enter(String authToken, Session session) throws IOException {
-        int gameID = 1; // ** temp variable ** //
-        connections.add(session, gameID);
-        Server server = new Server();
-        // line above is due to idea for forming message, which should
-        // send the user's name, not their authToken. The AuthToken can
-        // be used to retrieve the user data though unless better option available.
-        var message = String.format("%s joined as %s", authToken, /*ChessGame.TeamColor*/);
-        // message alternative for joining as observer. maybe third option for TEAM color
-        var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        Collection<Session> includeSessions = new ArrayList<>();
-        includeSessions.add(session);
-        connections.broadcast(includeSessions, serverMessage);
-    }
-
-    // make move command method
-    public void move(String authToken, int gameID, ChessMove move, Session session) throws MessageException {
-        try {
-            var message = String.format("%s moved %s to %s", playerName, pieceType, move.getEndPosition());
-            // message must be sent with corresponding board update
-            var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-            Collection<Session> includeSessions = new ArrayList<>();
-            includeSessions.add(session);
-            connections.broadcast(includeSessions, serverMessage);
-        } catch (Exception ex) {
-            throw new MessageException(ex.getMessage(), 500);
-        }
-//try {
-//            var message = String.format("%s says %s", petName, sound);
-//            var serverMessage = new Notification(Notification.Type.NOISE, message);
-//            connections.broadcast(null, notification);
-//        } catch (Exception ex) {
-//            throw new MessageException(ex.getMessage(), 500);
-//        }
-
-    }
-
-    // resign command method
-    public void forfeit(String authToken, int gameID, Session session) throws MessageException {
-        try {
-            var message = String.format("%s resigned the game", playerName);
-            // message must be sent with corresponding board update
-            var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-            Collection<Session> includeSessions = new ArrayList<>();
-            includeSessions.add(session);
-            connections.broadcast(includeSessions, serverMessage);
-        } catch (Exception ex) {
-            throw new MessageException(ex.getMessage(), 500);
-        }
-    }
-
-    // leave command method
-    private void exit(String authToken, Session session) throws IOException {
-        var message = String.format("%s left the game", playerName);
-        var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        Collection<Session> includeSessions = new ArrayList<>();
-        includeSessions.add(session);
-        connections.broadcast(includeSessions, serverMessage);
-        int gameID = 1; // ** temp variable ** //
-        connections.remove(session, gameID);
-    }
-
-    // Player is in check notif method
-
-
-    // Player is in checkmate notif method
-
-
-   ///
+    ///
     @Override
     public void handleClose(WsCloseContext ctx) {
         System.out.println("Websocket closed");
     }
 
-
-
-    public void makeNoise(String petName, String sound) throws MessageException {
+    //Connect command method maybe both player and observer
+    private void enter(String authToken, int gameID, SessionInfo sessionInfo, Session session) throws MessageException {
         try {
-            var message = String.format("%s says %s", petName, sound);
-            var serverMessage = new Notification(Notification.Type.NOISE, message);
-            connections.broadcast(null, notification);
+
+            connections.add(gameID, sessionInfo);
+
+            // Message Root Client LOADGAME
+            var ldGmMsg = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, new Gson().toJson(sqlDataAccess.getGame(gameID).game()));
+            connections.broadcast(session, gameID, ldGmMsg);
+
+            // Message Others Notification
+            var message = String.format("%s joined as %s", sessionInfo.username(), sessionInfo.teamColor());
+            var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            connections.broadcast(session, gameID, serverMessage);
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
         }
+    }
+
+    // make move command method
+    public void move(String authToken, int gameID, SessionInfo sessionInfo, ChessMove move, Session session) throws MessageException {
+        try {
+            sqlDataAccess.getGame(gameID).game().makeMove(move);
+
+            // Message All LOADGAME
+            var ldGmMsg =
+                new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, new Gson().toJson(sqlDataAccess.getGame(gameID).game().getBoard()));
+            connections.broadcast(null, gameID, ldGmMsg);
+
+            // Message Others Notification
+            ChessPiece mvdPc = sqlDataAccess.getGame(gameID).game().getBoard().getPiece(move.getEndPosition());
+            var message =
+                String.format("%s moved %s from %s to %s", sessionInfo.username(), mvdPc, move.getStartPosition(), move.getEndPosition());
+            var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            connections.broadcast(session, gameID, serverMessage);
+
+            // Message All for Check Checkmate Stalemate
+            checkMateStaleCheck(gameID);
+
+        } catch (Exception ex) {
+            throw new MessageException(ex.getMessage(), 500);
+        }
+
+    }
+
+    // resign command method
+    public void forfeit(String authToken, int gameID, SessionInfo sessionInfo, Session session) throws MessageException {
+        try {
+            // mark game as over
+            sqlDataAccess.getGame(gameID).game().setGameOver();
+            // update game in database accordingly???????????????
+
+
+            var message = String.format("%s resigned the game", sessionInfo.username());
+            var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            connections.broadcast(null, gameID, serverMessage);
+        } catch (Exception ex) {
+            throw new MessageException(ex.getMessage(), 500);
+        }
+    }
+
+    // leave command method for both player and observer
+    private void exit(String authToken, int gameID, SessionInfo sessionInfo, Session session) throws MessageException {
+        try {
+        if (sessionInfo.teamColor().equals("WHITE")) {
+            sqlDataAccess.updateGame(gameID, ChessGame.TeamColor.WHITE, null);
+        } else {
+            sqlDataAccess.updateGame(gameID, ChessGame.TeamColor.BLACK, null);
+        }
+
+        var message = String.format("%s left the game", sessionInfo.username());
+        var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        connections.broadcast(session, gameID, serverMessage);
+
+        connections.remove(gameID, sessionInfo);
+        } catch (Exception ex) {
+            throw new MessageException(ex.getMessage(), 500);
+        }
+    }
+
+    // Check, Checkmate, Stalemate Notifications
+    private void checkMateStaleCheck(int gameID) throws DataAccessException, IOException {
+        String player1 = "";
+        String player2 = "";
+        String condition = "";
+
+        if (sqlDataAccess.getGame(gameID).game().isInCheck(ChessGame.TeamColor.WHITE)) {
+            player1 = sqlDataAccess.getGame(gameID).blackUsername();
+            player2 = sqlDataAccess.getGame(gameID).whiteUsername();
+            condition = "Checked";
+        } else if (sqlDataAccess.getGame(gameID).game().isInCheck(ChessGame.TeamColor.BLACK)) {
+            player1 = sqlDataAccess.getGame(gameID).whiteUsername();
+            player2 = sqlDataAccess.getGame(gameID).blackUsername();
+            condition = "Checked";
+        }
+        if (sqlDataAccess.getGame(gameID).game().isInCheckmate(ChessGame.TeamColor.WHITE) ||
+            sqlDataAccess.getGame(gameID).game().isInCheckmate(ChessGame.TeamColor.BLACK)) {
+            condition = "Checkmated";
+        }
+        if (sqlDataAccess.getGame(gameID).game().isInStalemate(ChessGame.TeamColor.WHITE) ||
+            sqlDataAccess.getGame(gameID).game().isInStalemate(ChessGame.TeamColor.BLACK)) {
+            player1 = "This game";
+            player2 = "Stalemate";
+            condition = "reached";
+        }
+        if (player1.isEmpty()) {
+            return;
+        }
+        var message = String.format("%s has %s %s", player1, condition, player2);
+        var svrMsg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+        connections.broadcast(null, gameID, svrMsg);
     }
 }

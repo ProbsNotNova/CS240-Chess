@@ -14,11 +14,17 @@ public class ChessGame {
 
     private ChessBoard board;
     private boolean whiteTurn;
+    private boolean gameOver = false;
 
     public ChessGame() {
         this.board = new ChessBoard();
         board.resetBoard();
         this.whiteTurn = true;
+    }
+
+    // set game to Done for forfeits
+    public void setGameOver() {
+        gameOver = true;
     }
 
     /**
@@ -96,21 +102,23 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        ChessPiece piece = board.getPiece(move.getStartPosition());
-        if (piece != null && validMoves(move.getStartPosition()).contains(move) && piece.getTeamColor() == getTeamTurn()) {
-            movePiece(piece, move.getStartPosition(), move.getEndPosition());
+        if (!gameOver) {
+            ChessPiece piece = board.getPiece(move.getStartPosition());
+            if (piece != null && validMoves(move.getStartPosition()).contains(move) && piece.getTeamColor() == getTeamTurn()) {
+                movePiece(piece, move.getStartPosition(), move.getEndPosition());
 
-            // Pawn Promotion
-            ChessPiece.PieceType promotionPiece = move.getPromotionPiece();
-            if (promotionPiece != null) {
-                board.addPiece(move.getEndPosition(), null);
-                board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), promotionPiece));
+                // Pawn Promotion
+                ChessPiece.PieceType promotionPiece = move.getPromotionPiece();
+                if (promotionPiece != null) {
+                    board.addPiece(move.getEndPosition(), null);
+                    board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), promotionPiece));
+                }
+            } else {
+                throw new InvalidMoveException();
             }
-        } else {
-            throw new InvalidMoveException();
+            // turn toggle after successful move
+            whiteTurn = !whiteTurn;
         }
-        // turn toggle after successful move
-        whiteTurn = !whiteTurn;
     }
 
     /**
@@ -174,7 +182,8 @@ public class ChessGame {
         if (!isInCheck(teamColor)) {
             return false;
         }
-        return boardSweep(teamColor);
+        gameOver = boardSweep(teamColor);
+        return gameOver;
     }
 
     /**
