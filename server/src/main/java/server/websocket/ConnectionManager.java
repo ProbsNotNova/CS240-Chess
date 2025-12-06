@@ -44,15 +44,14 @@ public class ConnectionManager {
 
 
         public void broadcast(Session excludeSession, int gameID, ServerMessage serverMessage) throws IOException {
-        String msg = serverMessage.toString();
-        for (SessionInfo sessionInfo : connections.get(gameID)) {
+            String msg = serverMessage.toString();
+            Collection<SessionInfo> baba = connections.get(gameID);
+            for (SessionInfo sessionInfo : baba) {
                 if (sessionInfo.savedSession().isOpen()) {
                     if (!sessionInfo.savedSession().equals(excludeSession)) {
                         sessionInfo.savedSession().getRemote().sendString(msg);
                     }
                 }
-
-
-        }
+            }
     }
 }

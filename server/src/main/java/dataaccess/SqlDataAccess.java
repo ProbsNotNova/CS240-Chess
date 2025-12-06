@@ -139,7 +139,16 @@ public class SqlDataAccess implements DataAccess {
         } catch (NullPointerException ex) {
             throw new DataAccessException("Error: input null failed to update game", ex);
         }
+    }
 
+    public void updateChessGame(ChessGame inputGame, int gameID) throws DataAccessException {
+        try (var conn = DatabaseManager.getConnection()) {
+            executeUpdate(conn, "UPDATE game SET gameJson=? WHERE gameID=?", new Gson().toJson(inputGame), gameID);
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error: failed to update ChessGame", ex);
+        } catch (NullPointerException ex) {
+            throw new DataAccessException("Error: input null failed to ChessGame", ex);
+        }
     }
 
     @Override

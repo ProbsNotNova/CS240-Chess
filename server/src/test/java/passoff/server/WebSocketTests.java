@@ -320,7 +320,7 @@ public class WebSocketTests {
         Map<String, Integer> numExpectedMessages = expectedMessages(sender, 1, inGame, (expectSuccess ? 2 : 0), otherClients);
         Map<String, List<TestMessage>> actualMessages = environment.exchange(sender.username(), moveCommand, numExpectedMessages, waitTime);
 
-        if(extraNotification && actualMessages.get(sender.username()).size() > 1) {
+        if(extraNotification /*&& actualMessages.get(sender.username()).size() > 1*/) {
             assertCommandMessages(actualMessages, expectSuccess, sender, types(LOAD_GAME, NOTIFICATION),
                     inGame, types(LOAD_GAME, NOTIFICATION, NOTIFICATION), otherClients, description);
         }

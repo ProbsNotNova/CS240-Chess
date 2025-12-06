@@ -1,9 +1,6 @@
 package server.websocket;
 
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessMove;
-import chess.ChessPiece;
+import chess.*;
 import com.google.gson.Gson;
 import dataaccess.DataAccessException;
 import dataaccess.SqlDataAccess;
@@ -27,7 +24,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private final ConnectionManager connections = new ConnectionManager();
     private final HashMap<String, SessionInfo> authInfo = new HashMap<>();
     private final SqlDataAccess sqlDataAccess = new SqlDataAccess();
-//    private SessionInfo sessionInfo;
 
     @Override
     public void handleConnect(WsConnectContext ctx) {
@@ -99,25 +95,35 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     }
 
     // make move command method
-    public void move(String authToken, int gameID, ChessMove move, Session session) throws MessageException {
+    public void move(String authToken, int gameID, ChessMove move, Session session) throws MessageException, IOException {
         try {
-            sqlDataAccess.getGame(gameID).game().makeMove(move);
+            if (!sqlDataAccess.getGame(gameID).game().getGameOver()) {
+                ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
+                updatedGame.makeMove(move);
+                sqlDataAccess.updateChessGame(updatedGame, gameID);
 
-            // Message All LOADGAME
-            var ldGmMsg =
-                new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, sqlDataAccess.getGame(gameID).game());
-            connections.broadcast(null, gameID, ldGmMsg);
+                // Message All LOADGAME
+                var ldGmMsg =
+                        new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, sqlDataAccess.getGame(gameID).game());
+                connections.broadcast(null, gameID, ldGmMsg);
 
-            // Message Others Notification
-            ChessPiece mvdPc = sqlDataAccess.getGame(gameID).game().getBoard().getPiece(move.getEndPosition());
-            var message =
-                String.format("%s moved %s from %s to %s", authInfo.get(authToken).username(), mvdPc, move.getStartPosition(), move.getEndPosition());
-            var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-            connections.broadcast(session, gameID, serverMessage);
+                // Message Others Notification
+                ChessPiece mvdPc = sqlDataAccess.getGame(gameID).game().getBoard().getPiece(move.getEndPosition());
+                var message =
+                        String.format("%s moved %s from %s to %s", authInfo.get(authToken).username(), mvdPc, move.getStartPosition(), move.getEndPosition());
+                var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                connections.broadcast(session, gameID, serverMessage);
 
-            // Message All for Check Checkmate Stalemate
-            checkMateStaleCheck(gameID);
+                // Message All for Check Checkmate Stalemate
+                checkMateStaleCheck(gameID, session);
 
+            } else {
+                var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Game Over You Lost!");
+                connections.rootBroadcast(session, svrMsg);
+            }
+        } catch (InvalidMoveException ex) {
+            var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Game Over You Lost!");
+            connections.rootBroadcast(session, svrMsg);
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
         }
@@ -128,7 +134,10 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     public void forfeit(String authToken, int gameID, Session session) throws MessageException {
         try {
             // mark game as over
-            sqlDataAccess.getGame(gameID).game().setGameOver();
+//            sqlDataAccess.getGame(gameID).game().setGameOver();
+            ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
+            updatedGame.setGameOver();
+            sqlDataAccess.updateChessGame(updatedGame, gameID);
             // update game in database accordingly???????????????
 
 
@@ -161,7 +170,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     }
 
     // Check, Checkmate, Stalemate Notifications
-    private void checkMateStaleCheck(int gameID) throws DataAccessException, IOException {
+    private void checkMateStaleCheck(int gameID, Session session) throws DataAccessException, IOException {
         String player1 = "";
         String player2 = "";
         String condition = "";
@@ -178,18 +187,30 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         if (sqlDataAccess.getGame(gameID).game().isInCheckmate(ChessGame.TeamColor.WHITE) ||
             sqlDataAccess.getGame(gameID).game().isInCheckmate(ChessGame.TeamColor.BLACK)) {
             condition = "Checkmated";
+//            ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
+//            updatedGame.setGameOver();
+//            sqlDataAccess.updateChessGame(updatedGame, gameID);
+
         }
         if (sqlDataAccess.getGame(gameID).game().isInStalemate(ChessGame.TeamColor.WHITE) ||
             sqlDataAccess.getGame(gameID).game().isInStalemate(ChessGame.TeamColor.BLACK)) {
             player1 = "This game";
             player2 = "Stalemate";
             condition = "reached";
+//            ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
+//            updatedGame.setGameOver();
+//            sqlDataAccess.updateChessGame(updatedGame, gameID);
         }
         if (player1.isEmpty()) {
             return;
         }
-        var message = String.format("%s has %s %s", player1, condition, player2);
-        var svrMsg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        connections.broadcast(null, gameID, svrMsg);
+        if (session.isOpen()) {
+            var message = String.format("%s has %s %s", player1, condition, player2);
+            var svrMsg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+            connections.broadcast(null, gameID, svrMsg);
+        }
+//        ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
+//        updatedGame.setGameOver();
+//        sqlDataAccess.updateChessGame(updatedGame, gameID);
     }
 }
