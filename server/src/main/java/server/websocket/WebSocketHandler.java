@@ -24,6 +24,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private final ConnectionManager connections = new ConnectionManager();
     private final HashMap<String, SessionInfo> authInfo = new HashMap<>();
     private final SqlDataAccess sqlDataAccess = new SqlDataAccess();
+    private boolean resigned = false;
 
     @Override
     public void handleConnect(WsConnectContext ctx) {
@@ -98,24 +99,29 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     public void move(String authToken, int gameID, ChessMove move, Session session) throws MessageException, IOException {
         try {
             if (!sqlDataAccess.getGame(gameID).game().getGameOver()) {
-                ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
-                updatedGame.makeMove(move);
-                sqlDataAccess.updateChessGame(updatedGame, gameID);
+                if (sqlDataAccess.getGame(gameID).game().getTeamTurn().toString().equalsIgnoreCase(authInfo.get(authToken).teamColor())) {
+                    ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
+                    updatedGame.makeMove(move);
+                    sqlDataAccess.updateChessGame(updatedGame, gameID);
 
-                // Message All LOADGAME
-                var ldGmMsg =
-                        new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, sqlDataAccess.getGame(gameID).game());
-                connections.broadcast(null, gameID, ldGmMsg);
+                    // Message All LOADGAME
+                    var ldGmMsg =
+                            new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, sqlDataAccess.getGame(gameID).game());
+                    connections.broadcast(null, gameID, ldGmMsg);
 
-                // Message Others Notification
-                ChessPiece mvdPc = sqlDataAccess.getGame(gameID).game().getBoard().getPiece(move.getEndPosition());
-                var message =
-                        String.format("%s moved %s from %s to %s", authInfo.get(authToken).username(), mvdPc, move.getStartPosition(), move.getEndPosition());
-                var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-                connections.broadcast(session, gameID, serverMessage);
+                    // Message Others Notification
+                    ChessPiece mvdPc = sqlDataAccess.getGame(gameID).game().getBoard().getPiece(move.getEndPosition());
+                    var message =
+                            String.format("%s moved %s from %s to %s", authInfo.get(authToken).username(), mvdPc, move.getStartPosition(), move.getEndPosition());
+                    var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                    connections.broadcast(session, gameID, serverMessage);
 
-                // Message All for Check Checkmate Stalemate
-                checkMateStaleCheck(gameID, session);
+                    // Message All for Check Checkmate Stalemate
+                    checkMateStaleCheck(gameID, session);
+                } else {
+                    var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: You Can't Make a Move");
+                    connections.rootBroadcast(session, svrMsg);
+                }
 
             } else {
                 var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Game Over You Lost!");
@@ -133,17 +139,26 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     // resign command method
     public void forfeit(String authToken, int gameID, Session session) throws MessageException {
         try {
-            // mark game as over
-//            sqlDataAccess.getGame(gameID).game().setGameOver();
-            ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
-            updatedGame.setGameOver();
-            sqlDataAccess.updateChessGame(updatedGame, gameID);
-            // update game in database accordingly???????????????
+            if (authInfo.get(authToken).username().equals(sqlDataAccess.getGame(gameID).blackUsername()) ||
+                authInfo.get(authToken).username().equals(sqlDataAccess.getGame(gameID).whiteUsername())) {
+                if (!sqlDataAccess.getGame(gameID).game().getGameOver()) {
+                    ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
+                    updatedGame.setGameOver();
+                    sqlDataAccess.updateChessGame(updatedGame, gameID);
 
+                    var message = String.format("%s resigned the game", authInfo.get(authToken).username());
+                    var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
+                    connections.broadcast(null, gameID, serverMessage);
+//                    resigned = true;
+                } else {
+                    var serverMessage = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Can't Resign Game Over");
+                    connections.rootBroadcast(session, serverMessage);
+                }
 
-            var message = String.format("%s resigned the game", authInfo.get(authToken).username());
-            var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-            connections.broadcast(null, gameID, serverMessage);
+            } else {
+                var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: You Can't Resign");
+                connections.rootBroadcast(session, svrMsg);
+            }
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
         }
@@ -154,6 +169,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         try {
         if (authInfo.get(authToken).teamColor().equals("WHITE")) {
             sqlDataAccess.updateGame(gameID, ChessGame.TeamColor.WHITE, null);
+
         } else {
             sqlDataAccess.updateGame(gameID, ChessGame.TeamColor.BLACK, null);
         }

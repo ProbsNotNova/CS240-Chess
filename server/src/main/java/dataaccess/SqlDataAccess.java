@@ -129,10 +129,16 @@ public class SqlDataAccess implements DataAccess {
             GameData game = getGame(gameID);
             if (getGame(gameID).whiteUsername() == null && parsedPlayerColor == ChessGame.TeamColor.WHITE) {
                 GameData newGame = new GameData(game.gameID(), user, game.blackUsername(), game.gameName(), game.game());
-                    executeUpdate(conn, "UPDATE game SET whiteUsername=? WHERE gameID=?", newGame.whiteUsername(), newGame.gameID());
+                executeUpdate(conn, "UPDATE game SET whiteUsername=? WHERE gameID=?", newGame.whiteUsername(), newGame.gameID());
             } else if (getGame(gameID).blackUsername() == null && parsedPlayerColor == ChessGame.TeamColor.BLACK){
                 GameData newGame = new GameData(game.gameID(), game.whiteUsername(), user, game.gameName(), game.game());
                 executeUpdate(conn, "UPDATE game SET blackUsername=? WHERE gameID=?", newGame.blackUsername(), newGame.gameID());
+            } else if (parsedPlayerColor == ChessGame.TeamColor.WHITE && user == null) {
+                GameData newGame = new GameData(game.gameID(), null, game.blackUsername(), game.gameName(), game.game());
+                executeUpdate(conn, "UPDATE game SET whiteUsername=? WHERE gameID=?", newGame.whiteUsername(), newGame.gameID());
+            } else if (parsedPlayerColor == ChessGame.TeamColor.BLACK && user == null) {
+                GameData newGame = new GameData(game.gameID(), game.whiteUsername(), null, game.gameName(), game.game());
+                executeUpdate(conn, "UPDATE game SET whiteUsername=? WHERE gameID=?", newGame.blackUsername(), newGame.gameID());
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Error: failed to update game", ex);

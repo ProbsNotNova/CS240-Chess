@@ -2,8 +2,10 @@ package ui;
 
 import backend.ServerFacade;
 import model.GameData;
+import websocket.MessageException;
 import websocket.NotificationHandler;
 import websocket.WebSocketFacade;
+import websocket.messages.ServerMessage;
 
 import java.io.IOException;
 import java.util.*;
@@ -19,18 +21,18 @@ public class ChessClient {
 
     private final ServerFacade server = new ServerFacade(8080);
     private final BoardPrinter bdPrint = new BoardPrinter();
-//    private final WebSocketFacade ws;
-//
-//
-//    public ChessClient(String serverUrl) throws IOException {
-//        server = new ServerFacade(serverUrl);
-//        ws = new WebSocketFacade(serverUrl, this);
-//    }
-//
-//    public void notify(Notification notification) {
-//    System.out.println(RED + notification.message());
-//    printPrompt();
-//    }
+    private final WebSocketFacade ws;
+
+
+    public ChessClient(int serverPort, String serverUrl) throws IOException, MessageException {
+        server = new ServerFacade(serverPort);
+        ws = new WebSocketFacade(serverUrl, );
+    }
+
+    public void notify(ServerMessage serverMessage) {
+    System.out.println(RED + serverMessage.message());
+    printPrompt();
+    }
     // E definition of REPL loop
     public String eval(String input) throws IOException {
         String[] tokens = input.split(" ");
@@ -135,12 +137,14 @@ public class ChessClient {
                 throw new IOException("Game Does Not Exist");
             }
             GameData game = server.joinGame(params[1], mappedID.get(parseInt(params[0])), sessionAuth);
-
+            ws.connectToGame(sessionAuth, game.gameID());
             currentPlayerColor = params[1];
             bdPrint.printBoard(params[1], null);
             return String.format("Joined game %s as %s team", game.gameName(), params[1]);
         } catch (NumberFormatException e) {
             throw new IOException("Game Number Must be Integer");
+        } catch (MessageException e) {
+            throw new IOException("Invalid Websocket Command");
         }
     }
     public String observeGame(String... params) throws IOException {
