@@ -7,6 +7,7 @@ import jakarta.websocket.*;
 import model.SessionInfo;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
+import ui.BoardPrinter;
 
 import java.io.IOException;
 import java.net.URI;
@@ -17,6 +18,7 @@ public class WebSocketFacade extends Endpoint {
 
     Session session;
     NotificationHandler notificationHandler;
+    private final BoardPrinter boardPrinter = new BoardPrinter();
 
     public WebSocketFacade(String url, NotificationHandler notificationHandler) throws MessageException {
         try {
@@ -32,7 +34,12 @@ public class WebSocketFacade extends Endpoint {
                 @Override
                 public void onMessage(String message) {
                     ServerMessage serverMessage = new Gson().fromJson(message, ServerMessage.class);
-                    notificationHandler.notify(serverMessage);
+
+                    switch (serverMessage.getServerMessageType()) {
+                        case NOTIFICATION -> notificationHandler.notify(serverMessage, false);
+                        case LOAD_GAME -> notificationHandler.loadGame(serverMessage.getGame());
+                        case ERROR -> notificationHandler.notify(serverMessage, true);
+                    }
                 }
             });
         } catch (DeploymentException | IOException | URISyntaxException ex) {

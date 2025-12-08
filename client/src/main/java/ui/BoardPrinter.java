@@ -22,22 +22,47 @@ public class BoardPrinter {
     private static final int BOARD_SIZE_IN_SQUARES = 9;
     private static final int SQUARE_SIZE_IN_PADDED_CHARS = 3;
 
+    public void highlightBoard(String currentPlayerColor, ChessBoard inputBoard, ChessPiece piece, int row, int col) {
+        var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
+        if (inputBoard != null) {
+            board = inputBoard;
+        }
+        out.print(ERASE_SCREEN);
+//        board.resetBoard();
+        if (currentPlayerColor.equals("WHITE")) {
+            drawAlphaHeader(out, HEADERS[0]);
+            out.println();
+            drawWhiteSideBoard(out, true);
+            drawAlphaHeader(out, HEADERS[0]);
+        } else {
+            drawAlphaHeader(out, HEADERS[9]);
+            out.println();
+            drawBlackSideBoard(out, true);
+            drawAlphaHeader(out, HEADERS[9]);
+        }
+
+        out.print(SET_BG_COLOR_BLACK);
+//        out.print(SET_TEXT_COLOR_WHITE);
+        out.println();
+        out.print(RESET_BG_COLOR);
+    }
+
     public void printBoard(String currentPlayerColor, ChessBoard inputBoard) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
         if (inputBoard != null) {
             board = inputBoard;
         }
         out.print(ERASE_SCREEN);
-        board.resetBoard();
+        board.resetBoard(); // may need to get rid of this for reprints
         if (currentPlayerColor.equals("WHITE")) {
             drawAlphaHeader(out, HEADERS[0]);
             out.println();
-            drawWhiteSideBoard(out);
+            drawWhiteSideBoard(out, false);
             drawAlphaHeader(out, HEADERS[0]);
         } else {
             drawAlphaHeader(out, HEADERS[9]);
             out.println();
-            drawBlackSideBoard(out);
+            drawBlackSideBoard(out, false);
             drawAlphaHeader(out, HEADERS[9]);
         }
 
@@ -75,12 +100,12 @@ public class BoardPrinter {
         setBlack(out);
     }
 
-    private static void drawWhiteSideBoard(PrintStream out) {
+    private static void drawWhiteSideBoard(PrintStream out, boolean highlight) {
         int numHeadCnt = 1;
         for (int boardRow = 8; boardRow >= 1; boardRow--) {
             drawNumHeader(out, HEADERS[numHeadCnt]);
             for (int boardCol = 1; boardCol < BOARD_SIZE_IN_SQUARES; boardCol++) {
-                drawRowOfSquares(out, boardRow, boardCol);
+                drawSquares(out, boardRow, boardCol, highlight);
             }
             drawNumHeader(out, HEADERS[numHeadCnt]);
             numHeadCnt++;
@@ -89,12 +114,12 @@ public class BoardPrinter {
         }
 
     }
-    private static void drawBlackSideBoard(PrintStream out) {
+    private static void drawBlackSideBoard(PrintStream out, boolean highlight) {
             int numHeadCnt = 8;
         for (int boardRow = 1; boardRow < BOARD_SIZE_IN_SQUARES; boardRow++) {
             drawNumHeader(out, HEADERS[numHeadCnt]);
             for (int boardCol = 8; boardCol >= 1; boardCol--) {
-                drawRowOfSquares(out, boardRow, boardCol);
+                drawSquares(out, boardRow, boardCol, highlight);
             }
             drawNumHeader(out, HEADERS[numHeadCnt]);
             numHeadCnt--;
@@ -103,7 +128,7 @@ public class BoardPrinter {
         }
 
     }
-    private static void drawRowOfSquares(PrintStream out, int boardRow, int boardCol) {
+    private static void drawSquares(PrintStream out, int boardRow, int boardCol, boolean highlight) {
         if (boardRow % 2 == 0) {
             if (boardCol % 2 == 0) {
                 setBlack(out);

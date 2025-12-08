@@ -17,7 +17,7 @@ public class Console {
         var result = "";
         while(!result.equals("quit")) {
 
-            printPrompt();
+            client.printPrompt();
             String line = scanner.nextLine();
 
             try {
