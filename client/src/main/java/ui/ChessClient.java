@@ -1,8 +1,7 @@
 package ui;
 
 import backend.ServerFacade;
-import chess.ChessBoard;
-import chess.ChessGame;
+import chess.*;
 import model.GameData;
 import websocket.MessageException;
 import websocket.NotificationHandler;
@@ -21,6 +20,7 @@ public class ChessClient implements NotificationHandler {
     private State state = State.SIGNEDOUT;
     private String sessionAuth = null;
     public String currentPlayerColor = null;
+    private int currentGame = 0;
     private final Map<Integer, Integer> mappedID = new HashMap<>();
 
     private ServerFacade server = new ServerFacade(8080);
@@ -57,7 +57,7 @@ public class ChessClient implements NotificationHandler {
 
 
     // E definition of REPL loop
-    public String eval(String input) throws IOException {
+    public String eval(String input) throws IOException, MessageException {
         String[] tokens = input.split(" ");
         String cmd = (tokens.length > 0) ? tokens[0] : "help";
         String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
@@ -83,8 +83,8 @@ public class ChessClient implements NotificationHandler {
         return switch (cmd) {
             case "highlight" -> highlight(params); // ASK TA for help on game joins staying despite logout or quitting.
             case "move" -> makeMove(params);
-            case "redraw" -> bdPrint.printBoard(currentPlayerColor, currentBoard);
-            case "resign" -> resignGame(params);
+            case "redraw" -> redrawBoard();
+            case "resign" -> resignGame();
             case "leave" -> leaveGame();
             case "help" -> help();
             default -> help();
@@ -108,8 +108,8 @@ public class ChessClient implements NotificationHandler {
                     - help - with possible commands
                     """;
             case INGAME -> """
-                    - highlight <piece> <row> <col>
-                    - move <piece> <start row> <start col> <end row> <end col>
+                    - highlight <piece> <row> <col> - a piece's valid moves
+                    - move <piece> <start row> <start col> <end row> <end col> {<Promote pawn to QUEEN, ROOK, BISHOP, or KNIGHT>} - a piece
                     - redraw - the board
                     - resign - the game
                     - leave - with possible commands
@@ -178,6 +178,7 @@ public class ChessClient implements NotificationHandler {
             }
             GameData game = server.joinGame(params[1], mappedID.get(parseInt(params[0])), sessionAuth);
             currentPlayerColor = params[1];
+            currentGame = game.gameID();
             ws.connectToGame(sessionAuth, game.gameID());
 //            bdPrint.printBoard(params[1], null);
             return String.format("Joined game %s as %s team", game.gameName(), params[1]);
@@ -231,38 +232,75 @@ public class ChessClient implements NotificationHandler {
         if (params.length != 3) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-
-
+//        bdPrint.highlightBoard();
+        return "Highlighting Valid Moves";
     }
 
-    private String makeMove(String... params) throws IOException {
+    private String makeMove(String... params) throws IOException, MessageException {
         assertInGame();
-        if (params.length != 5) {
-            throw new IOException("Invalid Parameters, Check help()");
-        }
+        ChessPosition startPos = new ChessPosition(parseInt(params[1]), parseInt(params[2]));
+        ChessPosition endPos = new ChessPosition(parseInt(params[3]), parseInt(params[4]));
+        if (!params[0].equalsIgnoreCase("pawn")) {
 
+            if (params.length != 5) {
+            throw new IOException("Invalid Parameters, Check help()");
+            }
+
+            ws.makeGameMove(sessionAuth, currentGame, new ChessMove(startPos, endPos, null));
+        } else {
+            if (params.length != 6) {
+                throw new IOException("Invalid Parameters, Promote Ready, Check help()");
+            }
+            ChessPiece.PieceType promPiece;
+            if (params[5].equalsIgnoreCase("QUEEN")) {
+                promPiece = ChessPiece.PieceType.QUEEN;
+            } else if (params[5].equalsIgnoreCase("ROOK")) {
+                promPiece = ChessPiece.PieceType.QUEEN;
+            } else if (params[5].equalsIgnoreCase("BISHOP")) {
+                promPiece = ChessPiece.PieceType.QUEEN;
+            } else if (params[5].equalsIgnoreCase("KNIGHT")) {
+                promPiece = ChessPiece.PieceType.QUEEN;
+            } else {
+                throw new IOException("Invalid Promotion Piece, Check help()");
+            }
+            ws.makeGameMove(sessionAuth, currentGame, new ChessMove(startPos, endPos, promPiece));
+        }
+        return "Moved Piece";
     }
 
-    private String resignGame(String... params) throws IOException {
+    private String redrawBoard(String... params) throws IOException {
         assertInGame();
         if (params.length != 0) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-
-
+        bdPrint.printBoard(currentPlayerColor, currentBoard);
+        return "Redrawing Board";
     }
 
-    private String leaveGame(String... params) throws IOException {
+    private String resignGame(String... params) throws IOException, MessageException {
         assertInGame();
         if (params.length != 0) {
             throw new IOException("Invalid Parameters, Check help()");
         }
+        ws.resignGame(sessionAuth, currentGame);
+        currentGame = 0;
+        return "You Resigned the Game";
+    }
 
+    private String leaveGame(String... params) throws IOException, MessageException {
+        assertInGame();
+        if (params.length != 0) {
+            throw new IOException("Invalid Parameters, Check help()");
+        }
+        ws.leaveGame(sessionAuth, currentGame);
+        currentGame = 0;
+        state = State.SIGNEDIN;
+        return "Leaving Game";
     }
 
     private void assertInGame() throws IOException {
-        if (state == State.INGAME) {
-            throw new IOException("You must login or register");
+        if (state != State.INGAME) {
+            throw new IOException("You must join a game first!");
         }
     }
 }

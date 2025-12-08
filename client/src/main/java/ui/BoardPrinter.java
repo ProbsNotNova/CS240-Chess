@@ -7,6 +7,7 @@ import chess.ChessPosition;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Random;
 
 import static ui.EscapeSequences.*;
@@ -23,6 +24,13 @@ public class BoardPrinter {
     private static final int SQUARE_SIZE_IN_PADDED_CHARS = 3;
 
     public void highlightBoard(String currentPlayerColor, ChessBoard inputBoard, ChessPiece piece, int row, int col) {
+
+        //maybe this somewhere?
+        Collection<ChessMove> validMoves = piece.pieceMoves(board, new ChessPosition(row, col));
+        for (ChessMove move: validMoves) {
+            // square color green/dark green instead of white/black
+        }
+
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
         if (inputBoard != null) {
             board = inputBoard;
