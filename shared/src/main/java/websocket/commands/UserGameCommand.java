@@ -1,8 +1,6 @@
 package websocket.commands;
 
 import chess.ChessMove;
-import model.AuthData;
-import model.SessionInfo;
 
 import java.util.Objects;
 
@@ -46,10 +44,6 @@ public class UserGameCommand {
     public Integer getGameID() {
         return gameID;
     }
-
-//    public SessionInfo getSessionInfo() {
-//        return sessionInfo;
-//    }
 
     public ChessMove makeMove() {
         return move;
