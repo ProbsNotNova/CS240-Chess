@@ -2,6 +2,7 @@ package server.websocket;
 
 import model.SessionInfo;
 import org.eclipse.jetty.websocket.api.Session;
+import websocket.messages.ErrorMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -35,8 +36,15 @@ public class ConnectionManager {
         connections.put(gameID, sessionGroup);
     }
 
-    public void rootBroadcast(Session session, ServerMessage serverMessage) throws IOException {
+    public void rootLoadBroadcast(Session session, ServerMessage serverMessage) throws IOException {
         String msg = serverMessage.toString();
+        if (session.isOpen()) {
+            session.getRemote().sendString(msg);
+        }
+    }
+
+    public void rootErrorBroadcast(Session session, ErrorMessage errorMessage) throws IOException {
+        String msg = errorMessage.toString();
         if (session.isOpen()) {
             session.getRemote().sendString(msg);
         }

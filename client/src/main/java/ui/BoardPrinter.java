@@ -19,30 +19,30 @@ public class BoardPrinter {
     private static final int BOARD_SIZE_IN_SQUARES = 9;
     private static final int SQUARE_SIZE_IN_PADDED_CHARS = 3;
 
-    public void printBoard(String currentPlayerColor, ChessBoard inputBoard, ChessPosition startPos) {
+    public void printBoard(String currentPlayerColor, ChessGame inputGame, ChessPosition startPos) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
         boolean highlight = false;
         Collection<ChessMove> validMoves = new ArrayList<>();
 
-        if (inputBoard != null) {
-            board = inputBoard;
+        if (inputGame != null) {
+            board = inputGame.getBoard();
         }
         if (startPos != null) {
             highlight = true;
-            assert inputBoard != null;
-            validMoves = inputBoard.getPiece(startPos).pieceMoves(board, startPos);
+            assert inputGame != null;
+            validMoves = inputGame.validMoves(startPos);
         }
         out.print(ERASE_SCREEN);
-        board.resetBoard(); // may need to get rid of this for reprints
+//        board.resetBoard(); // may need to get rid of this for reprints
         if (currentPlayerColor.equals("WHITE")) {
             drawAlphaHeader(out, HEADERS[0]);
             out.println();
-            drawWhiteSideBoard(out, highlight, validMoves);
+            drawWhiteSideBoard(out, highlight, validMoves, startPos);
             drawAlphaHeader(out, HEADERS[0]);
         } else {
             drawAlphaHeader(out, HEADERS[9]);
             out.println();
-            drawBlackSideBoard(out, highlight, validMoves);
+            drawBlackSideBoard(out, highlight, validMoves, startPos);
             drawAlphaHeader(out, HEADERS[9]);
         }
 
@@ -80,12 +80,12 @@ public class BoardPrinter {
         setBlack(out);
     }
 
-    private static void drawWhiteSideBoard(PrintStream out, boolean highlight, Collection<ChessMove> valMoves) {
+    private static void drawWhiteSideBoard(PrintStream out, boolean highlight, Collection<ChessMove> valMoves, ChessPosition startPos) {
         int numHeadCnt = 1;
         for (int boardRow = 8; boardRow >= 1; boardRow--) {
             drawNumHeader(out, HEADERS[numHeadCnt]);
             for (int boardCol = 1; boardCol < BOARD_SIZE_IN_SQUARES; boardCol++) {
-                drawSquares(out, boardRow, boardCol, highlight, valMoves);
+                drawSquares(out, boardRow, boardCol, highlight, valMoves, startPos);
             }
             drawNumHeader(out, HEADERS[numHeadCnt]);
             numHeadCnt++;
@@ -94,12 +94,12 @@ public class BoardPrinter {
         }
 
     }
-    private static void drawBlackSideBoard(PrintStream out, boolean highlight, Collection<ChessMove> valMoves) {
+    private static void drawBlackSideBoard(PrintStream out, boolean highlight, Collection<ChessMove> valMoves, ChessPosition startPos) {
             int numHeadCnt = 8;
         for (int boardRow = 1; boardRow < BOARD_SIZE_IN_SQUARES; boardRow++) {
             drawNumHeader(out, HEADERS[numHeadCnt]);
             for (int boardCol = 8; boardCol >= 1; boardCol--) {
-                drawSquares(out, boardRow, boardCol, highlight, valMoves);
+                drawSquares(out, boardRow, boardCol, highlight, valMoves, startPos);
             }
             drawNumHeader(out, HEADERS[numHeadCnt]);
             numHeadCnt--;
@@ -109,36 +109,48 @@ public class BoardPrinter {
         }
 
     }
-    private static void drawSquares(PrintStream out, int boardRow, int boardCol, boolean highlight, Collection<ChessMove> valMoves) {
-        if (boardRow % 2 == 0) {
-            if (boardCol % 2 == 0) {
+    private static void drawSquares(PrintStream out, int bdRow, int bdCol, boolean hLight, Collection<ChessMove> valMoves, ChessPosition startPos) {
+        if (bdRow % 2 == 0) {
+            if (bdCol % 2 == 0) {
                 setBlack(out);
-                if (highlight && validEndPos(valMoves, boardRow, boardCol)) {
+                if (hLight && validEndPos(valMoves, bdRow, bdCol)) {
                     setDarkGreen(out);
                 }
-                printPiece(out, board.getPiece(new ChessPosition(boardRow, boardCol)));
+                if (hLight && bdRow == startPos.getRow() && bdCol == startPos.getColumn()) {
+                    setYellow(out);
+                }
+                printPiece(out, board.getPiece(new ChessPosition(bdRow, bdCol)));
 
             } else {
                 setWhite(out);
-                if (highlight && validEndPos(valMoves, boardRow, boardCol)) {
+                if (hLight && validEndPos(valMoves, bdRow, bdCol)) {
                     setGreen(out);
                 }
-                printPiece(out, board.getPiece(new ChessPosition(boardRow, boardCol)));
+                if (hLight && bdRow == startPos.getRow() && bdCol == startPos.getColumn()) {
+                    setYellow(out);
+                }
+                printPiece(out, board.getPiece(new ChessPosition(bdRow, bdCol)));
             }
         } else {
-            if (boardCol % 2 == 0) {
+            if (bdCol % 2 == 0) {
                 setWhite(out);
-                if (highlight && validEndPos(valMoves, boardRow, boardCol)) {
+                if (hLight && validEndPos(valMoves, bdRow, bdCol)) {
                     setGreen(out);
                 }
-                printPiece(out, board.getPiece(new ChessPosition(boardRow, boardCol)));
+                if (hLight && bdRow == startPos.getRow() && bdCol == startPos.getColumn()) {
+                    setYellow(out);
+                }
+                printPiece(out, board.getPiece(new ChessPosition(bdRow, bdCol)));
 
             } else {
                 setBlack(out);
-                if (highlight && validEndPos(valMoves, boardRow, boardCol)) {
+                if (hLight && validEndPos(valMoves, bdRow, bdCol)) {
                     setDarkGreen(out);
                 }
-                printPiece(out, board.getPiece(new ChessPosition(boardRow, boardCol)));
+                if (hLight && bdRow == startPos.getRow() && bdCol == startPos.getColumn()) {
+                    setYellow(out);
+                }
+                printPiece(out, board.getPiece(new ChessPosition(bdRow, bdCol)));
             }
         }
 
@@ -202,6 +214,9 @@ public class BoardPrinter {
     }
     private static void setGreen(PrintStream out) {
         out.print(SET_BG_COLOR_GREEN);
+    }
+    private static void setYellow(PrintStream out) {
+        out.print(SET_BG_COLOR_YELLOW);
     }
 
     private static void setBlackPieceRed(PrintStream out) {

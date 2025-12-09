@@ -138,7 +138,7 @@ public class SqlDataAccess implements DataAccess {
                 executeUpdate(conn, "UPDATE game SET whiteUsername=? WHERE gameID=?", newGame.whiteUsername(), newGame.gameID());
             } else if (parsedPlayerColor == ChessGame.TeamColor.BLACK && user == null) {
                 GameData newGame = new GameData(game.gameID(), game.whiteUsername(), null, game.gameName(), game.game());
-                executeUpdate(conn, "UPDATE game SET whiteUsername=? WHERE gameID=?", newGame.blackUsername(), newGame.gameID());
+                executeUpdate(conn, "UPDATE game SET blackUsername=? WHERE gameID=?", newGame.blackUsername(), newGame.gameID());
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Error: failed to update game", ex);

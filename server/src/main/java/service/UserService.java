@@ -104,7 +104,7 @@ public class UserService {
         ChessGame.TeamColor parsedPlayerColor;
         if (playerColor.equals("WHITE") && dataAccess.getGame(reqID).whiteUsername() == null) {
             parsedPlayerColor = ChessGame.TeamColor.WHITE;
-        } else if (dataAccess.getGame(reqID).blackUsername() == null) {
+        } else if (playerColor.equals("BLACK") && dataAccess.getGame(reqID).blackUsername() == null) {
             parsedPlayerColor = ChessGame.TeamColor.BLACK;
         } else {
             throw new DataAccessException("Error: Already taken", 403);

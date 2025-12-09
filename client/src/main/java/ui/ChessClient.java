@@ -6,6 +6,7 @@ import model.GameData;
 import websocket.MessageException;
 import websocket.NotificationHandler;
 import websocket.WebSocketFacade;
+import websocket.messages.ErrorMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -20,13 +21,13 @@ public class ChessClient implements NotificationHandler {
     private State state = State.SIGNEDOUT;
     private String sessionAuth = null;
     public String currentPlayerColor = null;
-    private int currentGame = 0;
+    private int currentGameID = 0;
     private final Map<Integer, Integer> mappedID = new HashMap<>();
 
     private ServerFacade server = new ServerFacade(8080);
     private final BoardPrinter bdPrint = new BoardPrinter();
     private final WebSocketFacade ws;
-    private ChessBoard currentBoard;
+    private ChessGame currentGame;
 
     /// ////////
     public ChessClient(int serverPort, String serverUrl) throws IOException, MessageException {
@@ -35,19 +36,21 @@ public class ChessClient implements NotificationHandler {
 
     }
 
-    public void notify(ServerMessage serverMessage, boolean error) {
-        if (error) { // maybe this needs to actually be in my console since it has print prompt
-            System.out.println(SET_TEXT_COLOR_RED + serverMessage.getMessage());
-            printPrompt();
-        } else {
-            System.out.println(SET_TEXT_COLOR_BLUE + serverMessage.getMessage());
-            printPrompt();
-        }
+    public void notify(ServerMessage serverMessage) {
+        System.out.println(SET_TEXT_COLOR_BLUE + serverMessage.getMessage());
+        printPrompt();
+    }
+
+    public void errNotify(ErrorMessage errorMessage) {
+        System.out.println(SET_TEXT_COLOR_RED + errorMessage.getErrorMessage());
+        printPrompt();
     }
 
     public void loadGame(ChessGame inputGame) {
-        bdPrint.printBoard(currentPlayerColor, inputGame.getBoard(), null);
-        currentBoard = inputGame.getBoard();
+        System.out.println();
+        bdPrint.printBoard(currentPlayerColor, inputGame, null);
+        printPrompt();
+        currentGame = inputGame;
     }
     /// ////////
 
@@ -79,16 +82,26 @@ public class ChessClient implements NotificationHandler {
                 case "help" -> help();
                 default -> help();
             };
+        } else if (state == State.INGAME) {
+            return switch (cmd) {
+                case "highlight" ->
+                        highlight(params); // ASK TA for help on game joins staying despite logout or quitting.
+                case "move" -> makeMove(params);
+                case "redraw" -> redrawBoard();
+                case "resign" -> resignGame();
+                case "leave" -> leaveGame();
+                case "help" -> help();
+                default -> help();
+            };
+        } else if (state == State.OBSERVE) {
+            return switch (cmd) {
+                case "redraw" -> redrawBoard();
+                case "leave" -> leaveGame();
+                case "help" -> help();
+                default -> help();
+            };
         }
-        return switch (cmd) {
-            case "highlight" -> highlight(params); // ASK TA for help on game joins staying despite logout or quitting.
-            case "move" -> makeMove(params);
-            case "redraw" -> redrawBoard();
-            case "resign" -> resignGame();
-            case "leave" -> leaveGame();
-            case "help" -> help();
-            default -> help();
-        };
+        return "FATAL ERROR";
     }
 
     public String help() {
@@ -108,11 +121,17 @@ public class ChessClient implements NotificationHandler {
                     - help - with possible commands
                     """;
             case INGAME -> """
-                    - highlight <piece> <row> <col> - a piece's valid moves
-                    - move <piece> <start row> <start col> <end row> <end col> {<Promote pawn to QUEEN, ROOK, BISHOP, or KNIGHT>} - a piece
+                    - highlight <piece> <square> - a piece's valid moves
+                    - move <piece> <start square> <end square> {<Promote pawn to QUEEN, ROOK, BISHOP, or KNIGHT>} - a piece
                     - redraw - the board
                     - resign - the game
-                    - leave - with possible commands
+                    - leave - the game
+                    - help - with possible commands
+                    """;
+            case OBSERVE -> """
+                    - redraw - the board
+                    - leave - the game
+                    - help - with possible commands
                     """;
         };
     }
@@ -178,9 +197,9 @@ public class ChessClient implements NotificationHandler {
             }
             GameData game = server.joinGame(params[1], mappedID.get(parseInt(params[0])), sessionAuth);
             currentPlayerColor = params[1];
-            currentGame = game.gameID();
+            currentGameID = game.gameID();
             ws.connectToGame(sessionAuth, game.gameID());
-//            bdPrint.printBoard(params[1], null);
+            state = State.INGAME;
             return String.format("Joined game %s as %s team", game.gameName(), params[1]);
         } catch (NumberFormatException e) {
             throw new IOException("Game Number Must be Integer");
@@ -198,8 +217,11 @@ public class ChessClient implements NotificationHandler {
                 throw new IOException("Game Does Not Exist");
             }
             if (mappedID.containsKey(parseInt(params[0]))) {
+                currentGameID = parseInt(params[0]);
+                currentPlayerColor = "OBSERVER";
                 ws.connectToGame(sessionAuth, parseInt(params[0]));
-                bdPrint.printBoard("WHITE", null, null);
+                state = State.OBSERVE;
+                // ask what else observe should do command wise
             }
             return String.format("Observing game with ID %s", params[0]);
         } catch (NumberFormatException e) {
@@ -229,52 +251,62 @@ public class ChessClient implements NotificationHandler {
 
     private String highlight(String... params) throws IOException {
         assertInGame();
-        if (params.length != 3) {
+        if (params.length != 2) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-        bdPrint.printBoard(currentPlayerColor, currentBoard, new ChessPosition(parseInt(params[1]), parseInt(params[2])));
+        String colStr = String.valueOf(params[1].charAt(0)).toLowerCase();
+        int col = colStrToInt(colStr);
+        int row = parseInt(String.valueOf(params[1].charAt(1)));
+        bdPrint.printBoard(currentPlayerColor, currentGame, new ChessPosition(row, col));
         return "Highlighting Valid Moves";
+        // seems to work
     }
 
     private String makeMove(String... params) throws IOException, MessageException {
         assertInGame();
-        ChessPosition startPos = new ChessPosition(parseInt(params[1]), parseInt(params[2]));
-        ChessPosition endPos = new ChessPosition(parseInt(params[3]), parseInt(params[4]));
-        if (!params[0].equalsIgnoreCase("pawn")) {
-
-            if (params.length != 5) {
-            throw new IOException("Invalid Parameters, Check help()");
-            }
-
-            ws.makeGameMove(sessionAuth, currentGame, new ChessMove(startPos, endPos, null));
-        } else {
-            if (params.length != 6) {
+        ChessPiece.PieceType promPiece = null;
+        if (params[0].equalsIgnoreCase("pawn") &&
+            (parseInt(String.valueOf(params[2].charAt(1))) == 8 || parseInt(String.valueOf(params[2].charAt(1))) == 1)) {
+            if (params.length != 4) {
                 throw new IOException("Invalid Parameters, Promote Ready, Check help()");
             }
-            ChessPiece.PieceType promPiece;
-            if (params[5].equalsIgnoreCase("QUEEN")) {
+            if (params[3].equalsIgnoreCase("QUEEN")) {
                 promPiece = ChessPiece.PieceType.QUEEN;
-            } else if (params[5].equalsIgnoreCase("ROOK")) {
-                promPiece = ChessPiece.PieceType.QUEEN;
-            } else if (params[5].equalsIgnoreCase("BISHOP")) {
-                promPiece = ChessPiece.PieceType.QUEEN;
-            } else if (params[5].equalsIgnoreCase("KNIGHT")) {
-                promPiece = ChessPiece.PieceType.QUEEN;
+            } else if (params[3].equalsIgnoreCase("ROOK")) {
+                promPiece = ChessPiece.PieceType.ROOK;
+            } else if (params[3].equalsIgnoreCase("BISHOP")) {
+                promPiece = ChessPiece.PieceType.BISHOP;
+            } else if (params[3].equalsIgnoreCase("KNIGHT")) {
+                promPiece = ChessPiece.PieceType.KNIGHT;
             } else {
                 throw new IOException("Invalid Promotion Piece, Check help()");
             }
-            ws.makeGameMove(sessionAuth, currentGame, new ChessMove(startPos, endPos, promPiece));
+        } else {
+            if (params.length != 3) {
+                throw new IOException("Invalid Parameters, Check help()");
+            }
         }
-        return "Moved Piece";
+        String stColStr = String.valueOf(params[1].charAt(0)).toLowerCase();
+        int stCol = colStrToInt(stColStr);
+        int stRow = parseInt(String.valueOf(params[1].charAt(1)));
+        ChessPosition startPos = new ChessPosition(stRow, stCol);
+        String ndColStr = String.valueOf(params[2].charAt(0)).toLowerCase();
+        int ndCol = colStrToInt(ndColStr);
+        int ndRow = parseInt(String.valueOf(params[2].charAt(1)));
+        ChessPosition endPos = new ChessPosition(ndRow, ndCol);
+        ws.makeGameMove(sessionAuth, currentGameID, new ChessMove(startPos, endPos, promPiece));
+        return "";
+        // doesn't work at all
     }
 
     private String redrawBoard(String... params) throws IOException {
-        assertInGame();
+        assertObserveInGame();
         if (params.length != 0) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-        bdPrint.printBoard(currentPlayerColor, currentBoard, null);
+        bdPrint.printBoard(currentPlayerColor, currentGame, null);
         return "Redrawing Board";
+        // seems to work
     }
 
     private String resignGame(String... params) throws IOException, MessageException {
@@ -282,25 +314,49 @@ public class ChessClient implements NotificationHandler {
         if (params.length != 0) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-        ws.resignGame(sessionAuth, currentGame);
-        currentGame = 0;
-        return "You Resigned the Game";
+        ws.resignGame(sessionAuth, currentGameID);
+        return "";
+        // sort of works but breaks
     }
 
     private String leaveGame(String... params) throws IOException, MessageException {
-        assertInGame();
+        assertObserveInGame();
         if (params.length != 0) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-        ws.leaveGame(sessionAuth, currentGame);
-        currentGame = 0;
+        ws.leaveGame(sessionAuth, currentGameID);
+        currentGameID = 0;
+        currentGame = null;
+        currentPlayerColor = null;
         state = State.SIGNEDIN;
         return "Leaving Game";
+    }
+
+    private int colStrToInt(String colStr) throws IOException {
+        int col;
+        switch (colStr) {
+            case "a" -> col = 1;
+            case "b" -> col = 2;
+            case "c" -> col = 3;
+            case "d" -> col = 4;
+            case "e" -> col = 5;
+            case "f" -> col = 6;
+            case "g" -> col = 7;
+            case "h" -> col = 8;
+            default -> throw new IOException("Invalid Column Letter");
+        }
+        return col;
     }
 
     private void assertInGame() throws IOException {
         if (state != State.INGAME) {
             throw new IOException("You must join a game first!");
+        }
+    }
+
+    private void assertObserveInGame() throws IOException {
+        if (state == State.SIGNEDIN || state == State.SIGNEDOUT) {
+            throw new IOException("You must Join or Observe a game first!");
         }
     }
 }

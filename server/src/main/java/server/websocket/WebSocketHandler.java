@@ -42,11 +42,11 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             // Trying here, otherwise only in Enter, or in all methods individually ew
             if (sqlDataAccess.getAuth(userGameCommand.getAuthToken()) == null) {
                 var serverMessage = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid Auth");
-                connections.rootBroadcast(ctx.session, serverMessage);
+                connections.rootErrorBroadcast(ctx.session, serverMessage);
                 return;
             } else if (userGameCommand.getGameID() > sqlDataAccess.listGames().size()) {
                 var serverMessage = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid GameID");
-                connections.rootBroadcast(ctx.session, serverMessage);
+                connections.rootErrorBroadcast(ctx.session, serverMessage);
                 return;
             }
 
@@ -72,19 +72,21 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private void enter(String authToken, int gameID, Session session) throws MessageException {
         try {
             SessionInfo sessionInfo;
-            if (sqlDataAccess.getGame(gameID).whiteUsername().equals(sqlDataAccess.getAuth(authToken).username())) {
+            if (sqlDataAccess.getGame(gameID).whiteUsername()!= null &&
+                sqlDataAccess.getGame(gameID).whiteUsername().equals(sqlDataAccess.getAuth(authToken).username())) {
                 sessionInfo = new SessionInfo(gameID, sqlDataAccess.getAuth(authToken).username(), "WHITE", session);
-            } else if (sqlDataAccess.getGame(gameID).blackUsername().equals(sqlDataAccess.getAuth(authToken).username())) {
+            } else if (sqlDataAccess.getGame(gameID).blackUsername()!= null &&
+                       sqlDataAccess.getGame(gameID).blackUsername().equals(sqlDataAccess.getAuth(authToken).username())) {
                 sessionInfo = new SessionInfo(gameID, sqlDataAccess.getAuth(authToken).username(), "BLACK", session);
             } else {
-                sessionInfo = new SessionInfo(gameID, sqlDataAccess.getAuth(authToken).username(), "OBSERVE", session);
+                sessionInfo = new SessionInfo(gameID, sqlDataAccess.getAuth(authToken).username(), "OBSERVER", session);
             }
             authInfo.put(authToken, sessionInfo);
             connections.add(gameID, sessionInfo);
 
             // Message Root Client LOADGAME
             var ldGmMsg = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, sqlDataAccess.getGame(gameID).game());
-            connections.rootBroadcast(session, ldGmMsg);
+            connections.rootLoadBroadcast(session, ldGmMsg);
 
             // Message Others Notification
             var message = String.format("%s joined as %s", sessionInfo.username(), sessionInfo.teamColor());
@@ -112,24 +114,27 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                     // Message Others Notification
                     ChessPiece mvdPc = sqlDataAccess.getGame(gameID).game().getBoard().getPiece(move.getEndPosition());
                     var message =
-                            String.format("%s moved %s from %s to %s", authInfo.get(authToken).username(), mvdPc, move.getStartPosition(), move.getEndPosition());
+                            String.format("%s moved %s from %s to %s", authInfo.get(authToken).username(), mvdPc.getPieceType(), move.getStartPosition(), move.getEndPosition());
                     var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.broadcast(session, gameID, serverMessage);
 
                     // Message All for Check Checkmate Stalemate
                     checkMateStaleCheck(gameID, session);
                 } else {
-                    var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: You Can't Make a Move");
-                    connections.rootBroadcast(session, svrMsg);
+                    var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "You Can't Make a Move Right Now");
+                    System.out.print(svrMsg.getErrorMessage() + authToken);
+                    connections.rootErrorBroadcast(session, svrMsg);
                 }
 
             } else {
-                var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Game Over You Lost!");
-                connections.rootBroadcast(session, svrMsg);
+                var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Can't Move, Game Over!");
+                System.out.print(svrMsg.getErrorMessage() + authToken);
+                connections.rootErrorBroadcast(session, svrMsg);
             }
         } catch (InvalidMoveException ex) {
-            var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Game Over You Lost!");
-            connections.rootBroadcast(session, svrMsg);
+            var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Invalid Move");
+            System.out.print(svrMsg.getErrorMessage() + authToken);
+            connections.rootErrorBroadcast(session, svrMsg);
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
         }
@@ -152,12 +157,14 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 //                    resigned = true;
                 } else {
                     var serverMessage = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Can't Resign Game Over");
-                    connections.rootBroadcast(session, serverMessage);
+                    System.out.print(serverMessage.getErrorMessage() + authToken);
+                    connections.rootErrorBroadcast(session, serverMessage);
                 }
 
             } else {
                 var svrMsg = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: You Can't Resign");
-                connections.rootBroadcast(session, svrMsg);
+                System.out.print(svrMsg.getErrorMessage() + authToken);
+                connections.rootErrorBroadcast(session, svrMsg);
             }
         } catch (Exception ex) {
             throw new MessageException(ex.getMessage(), 500);
@@ -170,7 +177,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         if (authInfo.get(authToken).teamColor().equals("WHITE")) {
             sqlDataAccess.updateGame(gameID, ChessGame.TeamColor.WHITE, null);
 
-        } else {
+        } else if (authInfo.get(authToken).teamColor().equals("BLACK")) {
             sqlDataAccess.updateGame(gameID, ChessGame.TeamColor.BLACK, null);
         }
 
@@ -225,8 +232,8 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             var svrMsg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(null, gameID, svrMsg);
         }
-//        ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
-//        updatedGame.setGameOver();
-//        sqlDataAccess.updateChessGame(updatedGame, gameID);
+        ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
+        updatedGame.setGameOver();
+        sqlDataAccess.updateChessGame(updatedGame, gameID);
     }
 }
