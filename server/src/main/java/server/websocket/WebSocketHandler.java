@@ -37,9 +37,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     public void handleMessage(WsMessageContext ctx) {
         try {
             UserGameCommand userGameCommand = new Gson().fromJson(ctx.message(), UserGameCommand.class);
-            /// move keeps coming in as null here for some reason. is it not ChessMove????
 
-            // Trying here, otherwise only in Enter, or in all methods individually ew
             if (sqlDataAccess.getAuth(userGameCommand.getAuthToken()) == null) {
                 var serverMessage = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Error: Invalid Auth");
                 connections.rootErrorBroadcast(ctx.session, serverMessage);
@@ -68,7 +66,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         System.out.println("Websocket closed");
     }
 
-    //Connect command method maybe both player and observer
     private void enter(String authToken, int gameID, Session session) throws MessageException {
         try {
             SessionInfo sessionInfo;
@@ -210,6 +207,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         if (sqlDataAccess.getGame(gameID).game().isInCheckmate(ChessGame.TeamColor.WHITE) ||
             sqlDataAccess.getGame(gameID).game().isInCheckmate(ChessGame.TeamColor.BLACK)) {
             condition = "Checkmated";
+            gameOverSet(gameID);
 
         }
         if (sqlDataAccess.getGame(gameID).game().isInStalemate(ChessGame.TeamColor.WHITE) ||
@@ -217,6 +215,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             player1 = "This game";
             player2 = "Stalemate";
             condition = "reached";
+            gameOverSet(gameID);
         }
         if (player1.isEmpty()) {
             return;
@@ -226,6 +225,9 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             var svrMsg = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
             connections.broadcast(null, gameID, svrMsg);
         }
+
+    }
+    private void gameOverSet(int gameID) throws DataAccessException {
         ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
         updatedGame.setGameOver();
         sqlDataAccess.updateChessGame(updatedGame, gameID);

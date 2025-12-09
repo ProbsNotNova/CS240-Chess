@@ -33,7 +33,6 @@ public class BoardPrinter {
             validMoves = inputGame.validMoves(startPos);
         }
         out.print(ERASE_SCREEN);
-//        board.resetBoard(); // may need to get rid of this for reprints
         if (currentPlayerColor.equals("WHITE")) {
             drawAlphaHeader(out, HEADERS[0]);
             out.println();
@@ -47,7 +46,6 @@ public class BoardPrinter {
         }
 
         out.print(SET_BG_COLOR_BLACK);
-//        out.print(SET_TEXT_COLOR_WHITE);
         out.println();
         out.print(RESET_BG_COLOR);
     }
@@ -111,34 +109,42 @@ public class BoardPrinter {
     }
     private static void drawSquares(PrintStream out, int bdRow, int bdCol, boolean hLight, Collection<ChessMove> valMoves, ChessPosition startPos) {
         if (bdRow % 2 == 0) {
-            sqColorLogic(out, bdRow, bdCol, hLight, valMoves, startPos);
+            if (bdCol % 2 == 0) {
+                blkSqColorLogic(out, bdRow, bdCol, hLight, valMoves, startPos);
+            } else {
+                wtSqColorLogic(out, bdRow, bdCol, hLight, valMoves, startPos);
+            }
         } else {
-            sqColorLogic(out, bdRow, bdCol, hLight, valMoves, startPos);
+            if (bdCol % 2 == 0) {
+                wtSqColorLogic(out, bdRow, bdCol, hLight, valMoves, startPos);
+            } else {
+                blkSqColorLogic(out, bdRow, bdCol, hLight, valMoves, startPos);
+            }
         }
 
     }
 
-    private static void sqColorLogic(PrintStream out, int bdRow, int bdCol, boolean hLight, Collection<ChessMove> valMoves, ChessPosition startPos) {
-        if (bdCol % 2 == 0) {
-            setBlack(out);
-            if (hLight && validEndPos(valMoves, bdRow, bdCol)) {
-                setDarkGreen(out);
-            }
-            if (hLight && bdRow == startPos.getRow() && bdCol == startPos.getColumn()) {
-                setYellow(out);
-            }
-            printPiece(out, board.getPiece(new ChessPosition(bdRow, bdCol)));
-
-        } else {
-            setWhite(out);
-            if (hLight && validEndPos(valMoves, bdRow, bdCol)) {
-                setGreen(out);
-            }
-            if (hLight && bdRow == startPos.getRow() && bdCol == startPos.getColumn()) {
-                setYellow(out);
-            }
-            printPiece(out, board.getPiece(new ChessPosition(bdRow, bdCol)));
+    private static void wtSqColorLogic(PrintStream out, int bdRw, int bdCl, boolean hLite, Collection<ChessMove> valMoves, ChessPosition startPos) {
+        setWhite(out);
+        if (hLite && validEndPos(valMoves, bdRw, bdCl)) {
+            setGreen(out);
         }
+        pieceColPrint(out, bdRw, bdCl, hLite, startPos);
+    }
+
+    private static void blkSqColorLogic(PrintStream out, int bdRw, int bdCl, boolean hLite, Collection<ChessMove> valMoves, ChessPosition startPos) {
+        setBlack(out);
+        if (hLite && validEndPos(valMoves, bdRw, bdCl)) {
+            setDarkGreen(out);
+        }
+        pieceColPrint(out, bdRw, bdCl, hLite, startPos);
+    }
+
+    private static void pieceColPrint(PrintStream out, int bdRw, int bdCl, boolean hLite, ChessPosition startPos) {
+        if (hLite && bdRw == startPos.getRow() && bdCl == startPos.getColumn()) {
+            setYellow(out);
+        }
+        printPiece(out, board.getPiece(new ChessPosition(bdRw, bdCl)));
     }
 
     private static boolean validEndPos(Collection<ChessMove> valMoves, int boardRow, int boardCol) {
