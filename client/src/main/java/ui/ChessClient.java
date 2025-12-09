@@ -46,7 +46,7 @@ public class ChessClient implements NotificationHandler {
     }
 
     public void loadGame(ChessGame inputGame) {
-        bdPrint.printBoard(currentPlayerColor, inputGame.getBoard());
+        bdPrint.printBoard(currentPlayerColor, inputGame.getBoard(), null);
         currentBoard = inputGame.getBoard();
     }
     /// ////////
@@ -199,7 +199,7 @@ public class ChessClient implements NotificationHandler {
             }
             if (mappedID.containsKey(parseInt(params[0]))) {
                 ws.connectToGame(sessionAuth, parseInt(params[0]));
-                bdPrint.printBoard("WHITE", null);
+                bdPrint.printBoard("WHITE", null, null);
             }
             return String.format("Observing game with ID %s", params[0]);
         } catch (NumberFormatException e) {
@@ -232,7 +232,7 @@ public class ChessClient implements NotificationHandler {
         if (params.length != 3) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-//        bdPrint.highlightBoard();
+        bdPrint.printBoard(currentPlayerColor, currentBoard, new ChessPosition(parseInt(params[1]), parseInt(params[2])));
         return "Highlighting Valid Moves";
     }
 
@@ -273,7 +273,7 @@ public class ChessClient implements NotificationHandler {
         if (params.length != 0) {
             throw new IOException("Invalid Parameters, Check help()");
         }
-        bdPrint.printBoard(currentPlayerColor, currentBoard);
+        bdPrint.printBoard(currentPlayerColor, currentBoard, null);
         return "Redrawing Board";
     }
 

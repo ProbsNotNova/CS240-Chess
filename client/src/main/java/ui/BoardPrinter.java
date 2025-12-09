@@ -1,14 +1,10 @@
 package ui;
 
-import chess.ChessBoard;
-import chess.ChessGame;
-import chess.ChessPiece;
-import chess.ChessPosition;
+import chess.*;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Random;
+import java.util.*;
 
 import static ui.EscapeSequences.*;
 
@@ -23,54 +19,30 @@ public class BoardPrinter {
     private static final int BOARD_SIZE_IN_SQUARES = 9;
     private static final int SQUARE_SIZE_IN_PADDED_CHARS = 3;
 
-    public void highlightBoard(String currentPlayerColor, ChessBoard inputBoard, ChessPiece piece, int row, int col) {
-
-        //maybe this somewhere?
-        Collection<ChessMove> validMoves = piece.pieceMoves(board, new ChessPosition(row, col));
-        for (ChessMove move: validMoves) {
-            // square color green/dark green instead of white/black
-        }
-
+    public void printBoard(String currentPlayerColor, ChessBoard inputBoard, ChessPosition startPos) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
+        boolean highlight = false;
+        Collection<ChessMove> validMoves = new ArrayList<>();
+
         if (inputBoard != null) {
             board = inputBoard;
         }
-        out.print(ERASE_SCREEN);
-//        board.resetBoard();
-        if (currentPlayerColor.equals("WHITE")) {
-            drawAlphaHeader(out, HEADERS[0]);
-            out.println();
-            drawWhiteSideBoard(out, true);
-            drawAlphaHeader(out, HEADERS[0]);
-        } else {
-            drawAlphaHeader(out, HEADERS[9]);
-            out.println();
-            drawBlackSideBoard(out, true);
-            drawAlphaHeader(out, HEADERS[9]);
-        }
-
-        out.print(SET_BG_COLOR_BLACK);
-//        out.print(SET_TEXT_COLOR_WHITE);
-        out.println();
-        out.print(RESET_BG_COLOR);
-    }
-
-    public void printBoard(String currentPlayerColor, ChessBoard inputBoard) {
-        var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
-        if (inputBoard != null) {
-            board = inputBoard;
+        if (startPos != null) {
+            highlight = true;
+            assert inputBoard != null;
+            validMoves = inputBoard.getPiece(startPos).pieceMoves(board, startPos);
         }
         out.print(ERASE_SCREEN);
         board.resetBoard(); // may need to get rid of this for reprints
         if (currentPlayerColor.equals("WHITE")) {
             drawAlphaHeader(out, HEADERS[0]);
             out.println();
-            drawWhiteSideBoard(out, false);
+            drawWhiteSideBoard(out, highlight, validMoves);
             drawAlphaHeader(out, HEADERS[0]);
         } else {
             drawAlphaHeader(out, HEADERS[9]);
             out.println();
-            drawBlackSideBoard(out, false);
+            drawBlackSideBoard(out, highlight, validMoves);
             drawAlphaHeader(out, HEADERS[9]);
         }
 
@@ -108,7 +80,7 @@ public class BoardPrinter {
         setBlack(out);
     }
 
-    private static void drawWhiteSideBoard(PrintStream out, boolean highlight) {
+    private static void drawWhiteSideBoard(PrintStream out, boolean highlight, Collection<ChessMove> valMoves) {
         int numHeadCnt = 1;
         for (int boardRow = 8; boardRow >= 1; boardRow--) {
             drawNumHeader(out, HEADERS[numHeadCnt]);
@@ -122,7 +94,7 @@ public class BoardPrinter {
         }
 
     }
-    private static void drawBlackSideBoard(PrintStream out, boolean highlight) {
+    private static void drawBlackSideBoard(PrintStream out, boolean highlight, Collection<ChessMove> valMoves) {
             int numHeadCnt = 8;
         for (int boardRow = 1; boardRow < BOARD_SIZE_IN_SQUARES; boardRow++) {
             drawNumHeader(out, HEADERS[numHeadCnt]);
@@ -133,30 +105,52 @@ public class BoardPrinter {
             numHeadCnt--;
             setBlack(out);
             out.println();
+
         }
 
     }
-    private static void drawSquares(PrintStream out, int boardRow, int boardCol, boolean highlight) {
+    private static void drawSquares(PrintStream out, int boardRow, int boardCol, boolean highlight, Collection<ChessMove> valMoves) {
         if (boardRow % 2 == 0) {
             if (boardCol % 2 == 0) {
                 setBlack(out);
+                if (highlight && validEndPos(valMoves, boardRow, boardCol)) {
+                    setDarkGreen(out);
+                }
                 printPiece(out, board.getPiece(new ChessPosition(boardRow, boardCol)));
 
             } else {
                 setWhite(out);
+                if (highlight && validEndPos(valMoves, boardRow, boardCol)) {
+                    setGreen(out);
+                }
                 printPiece(out, board.getPiece(new ChessPosition(boardRow, boardCol)));
             }
         } else {
             if (boardCol % 2 == 0) {
                 setWhite(out);
+                if (highlight && validEndPos(valMoves, boardRow, boardCol)) {
+                    setGreen(out);
+                }
                 printPiece(out, board.getPiece(new ChessPosition(boardRow, boardCol)));
 
             } else {
                 setBlack(out);
+                if (highlight && validEndPos(valMoves, boardRow, boardCol)) {
+                    setDarkGreen(out);
+                }
                 printPiece(out, board.getPiece(new ChessPosition(boardRow, boardCol)));
             }
         }
 
+    }
+
+    private static boolean validEndPos(Collection<ChessMove> valMoves, int boardRow, int boardCol) {
+        for (ChessMove move : valMoves) {
+            if (Objects.equals(move.getEndPosition(), new ChessPosition(boardRow, boardCol))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void printPiece(PrintStream out, ChessPiece piece) {
@@ -202,6 +196,12 @@ public class BoardPrinter {
     }
     private static void setLightGrey(PrintStream out) {
         out.print(SET_BG_COLOR_LIGHT_GREY);
+    }
+    private static void setDarkGreen(PrintStream out) {
+        out.print(SET_BG_COLOR_DARK_GREEN);
+    }
+    private static void setGreen(PrintStream out) {
+        out.print(SET_BG_COLOR_GREEN);
     }
 
     private static void setBlackPieceRed(PrintStream out) {

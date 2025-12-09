@@ -1,12 +1,17 @@
 package ui;
+import websocket.MessageException;
+
+import java.io.IOException;
 import java.util.Scanner;
 
 import static ui.EscapeSequences.*;
 
 public class Console {
-    public final ChessClient client = new ChessClient();
+    public final ChessClient client;
     private final Scanner scanner = new Scanner(System.in);
-
+    public Console(int serverPort, String serverURL) throws MessageException, IOException {
+        client = new ChessClient(serverPort, serverURL);
+    }
     private void printPrompt() {
         System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
     }
