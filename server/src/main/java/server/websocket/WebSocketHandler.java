@@ -113,7 +113,8 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                     // Message Others Notification
                     ChessPiece mvdPc = sqlDataAccess.getGame(gameID).game().getBoard().getPiece(move.getEndPosition());
                     var message =
-                            String.format("%s moved %s from %s to %s", authInfo.get(authToken).username(), mvdPc.getPieceType(), move.getStartPosition(), move.getEndPosition());
+                            String.format("%s moved %s from %s to %s", authInfo.get(authToken).username(), mvdPc.getPieceType(),
+                                          move.getStartPosition(), move.getEndPosition());
                     var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.broadcast(session, gameID, serverMessage);
 
