@@ -1,4 +1,5 @@
 package ui;
+
 import websocket.MessageException;
 
 import java.io.IOException;
