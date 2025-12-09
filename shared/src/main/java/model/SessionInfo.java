@@ -1,7 +1,7 @@
 package model;
 
-import chess.ChessGame;
-import org.eclipse.jetty.websocket.api.Session;
+
+import org.eclipse.jetty.server.session.Session;
 
 public record SessionInfo(int gameID, String username, String teamColor, Session savedSession) {
 }
