@@ -85,7 +85,7 @@ public class BoardPrinter {
         for (int boardRow = 8; boardRow >= 1; boardRow--) {
             drawNumHeader(out, HEADERS[numHeadCnt]);
             for (int boardCol = 1; boardCol < BOARD_SIZE_IN_SQUARES; boardCol++) {
-                drawSquares(out, boardRow, boardCol, highlight);
+                drawSquares(out, boardRow, boardCol, highlight, valMoves);
             }
             drawNumHeader(out, HEADERS[numHeadCnt]);
             numHeadCnt++;
@@ -99,7 +99,7 @@ public class BoardPrinter {
         for (int boardRow = 1; boardRow < BOARD_SIZE_IN_SQUARES; boardRow++) {
             drawNumHeader(out, HEADERS[numHeadCnt]);
             for (int boardCol = 8; boardCol >= 1; boardCol--) {
-                drawSquares(out, boardRow, boardCol, highlight);
+                drawSquares(out, boardRow, boardCol, highlight, valMoves);
             }
             drawNumHeader(out, HEADERS[numHeadCnt]);
             numHeadCnt--;
