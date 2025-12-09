@@ -4,7 +4,6 @@ import chess.ChessMove;
 import com.google.gson.Gson;
 
 import jakarta.websocket.*;
-import model.SessionInfo;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.ServerMessage;

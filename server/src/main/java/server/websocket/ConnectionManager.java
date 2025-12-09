@@ -13,12 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConnectionManager {
     public final ConcurrentHashMap<Integer, Collection<SessionInfo>> connections = new ConcurrentHashMap<>();
 
-//    // Create sessionGroup for new gameID
-//    public void create(int gameID) {
-//        Collection<Session> sessionGroup = new ArrayList<>();
-//        connections.put(gameID, sessionGroup);
-//    }
-
     // Add a session to the gameID sessionGroup
     public void add(int gameID, SessionInfo sessionInfo) {
         Collection<SessionInfo> sessionGroup = new ArrayList<>();

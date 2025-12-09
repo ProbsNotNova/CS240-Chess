@@ -29,11 +29,9 @@ public class ChessClient implements NotificationHandler {
     private final WebSocketFacade ws;
     private ChessGame currentGame;
 
-    /// ////////
     public ChessClient(int serverPort, String serverUrl) throws IOException, MessageException {
         server = new ServerFacade(serverPort);
         ws = new WebSocketFacade(serverUrl, this);
-
     }
 
     public void notify(ServerMessage serverMessage) {
@@ -52,7 +50,6 @@ public class ChessClient implements NotificationHandler {
         printPrompt();
         currentGame = inputGame;
     }
-    /// ////////
 
     public void printPrompt() {
         System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
@@ -75,7 +72,7 @@ public class ChessClient implements NotificationHandler {
         } else if (state == State.SIGNEDIN) {
             return switch (cmd) {
                 case "create" -> createGame(params);
-                case "list" -> listGames(params); // ASK TA for help on game joins staying despite logout or quitting.
+                case "list" -> listGames(params);
                 case "join" -> joinGame(params);
                 case "observe" -> observeGame(params);
                 case "logout" -> logout();
@@ -84,8 +81,7 @@ public class ChessClient implements NotificationHandler {
             };
         } else if (state == State.INGAME) {
             return switch (cmd) {
-                case "highlight" ->
-                        highlight(params); // ASK TA for help on game joins staying despite logout or quitting.
+                case "highlight" -> highlight(params);
                 case "move" -> makeMove(params);
                 case "redraw" -> redrawBoard();
                 case "resign" -> resignGame();
@@ -221,7 +217,6 @@ public class ChessClient implements NotificationHandler {
                 currentPlayerColor = "OBSERVER";
                 ws.connectToGame(sessionAuth, parseInt(params[0]));
                 state = State.OBSERVE;
-                // ask what else observe should do command wise
             }
             return String.format("Observing game with ID %s", params[0]);
         } catch (NumberFormatException e) {
@@ -248,7 +243,6 @@ public class ChessClient implements NotificationHandler {
     }
 
     /// INGAME State Methods
-
     private String highlight(String... params) throws IOException {
         assertInGame();
         if (params.length != 2) {
@@ -259,7 +253,6 @@ public class ChessClient implements NotificationHandler {
         int row = parseInt(String.valueOf(params[1].charAt(1)));
         bdPrint.printBoard(currentPlayerColor, currentGame, new ChessPosition(row, col));
         return "Highlighting Valid Moves";
-        // seems to work
     }
 
     private String makeMove(String... params) throws IOException, MessageException {
@@ -296,7 +289,6 @@ public class ChessClient implements NotificationHandler {
         ChessPosition endPos = new ChessPosition(ndRow, ndCol);
         ws.makeGameMove(sessionAuth, currentGameID, new ChessMove(startPos, endPos, promPiece));
         return "";
-        // doesn't work at all
     }
 
     private String redrawBoard(String... params) throws IOException {
@@ -306,7 +298,6 @@ public class ChessClient implements NotificationHandler {
         }
         bdPrint.printBoard(currentPlayerColor, currentGame, null);
         return "Redrawing Board";
-        // seems to work
     }
 
     private String resignGame(String... params) throws IOException, MessageException {

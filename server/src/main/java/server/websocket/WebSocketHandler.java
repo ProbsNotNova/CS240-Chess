@@ -24,7 +24,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private final ConnectionManager connections = new ConnectionManager();
     private final HashMap<String, SessionInfo> authInfo = new HashMap<>();
     private final SqlDataAccess sqlDataAccess = new SqlDataAccess();
-    private boolean resigned = false;
 
     @Override
     public void handleConnect(WsConnectContext ctx) {
@@ -154,7 +153,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                     var message = String.format("%s resigned the game", authInfo.get(authToken).username());
                     var serverMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
                     connections.broadcast(null, gameID, serverMessage);
-//                    resigned = true;
                 } else {
                     var serverMessage = new ErrorMessage(ServerMessage.ServerMessageType.ERROR, "Can't Resign Game Over");
                     System.out.print(serverMessage.getErrorMessage() + authToken);
@@ -210,9 +208,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         if (sqlDataAccess.getGame(gameID).game().isInCheckmate(ChessGame.TeamColor.WHITE) ||
             sqlDataAccess.getGame(gameID).game().isInCheckmate(ChessGame.TeamColor.BLACK)) {
             condition = "Checkmated";
-//            ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
-//            updatedGame.setGameOver();
-//            sqlDataAccess.updateChessGame(updatedGame, gameID);
 
         }
         if (sqlDataAccess.getGame(gameID).game().isInStalemate(ChessGame.TeamColor.WHITE) ||
@@ -220,9 +215,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             player1 = "This game";
             player2 = "Stalemate";
             condition = "reached";
-//            ChessGame updatedGame = sqlDataAccess.getGame(gameID).game();
-//            updatedGame.setGameOver();
-//            sqlDataAccess.updateChessGame(updatedGame, gameID);
         }
         if (player1.isEmpty()) {
             return;
